@@ -4,7 +4,7 @@
 
 @section ('content')
 
-    <div class="container">
+    <div class="container pt-1">
 
         <div class="pb-2 mt-4 mb-4 border-bottom">
             <h1>
@@ -20,12 +20,11 @@
                                 {{ session('status') }}
                             </div>
                         @endif
+                        {{ Form::open(array('url'=>route('password.email') )) }}
+                        
 
-                        <form method="POST" action="{{ route('password.email') }}">
-                            @csrf
-
-                            <div class="form-group row">
-                                <label for="email" class="col-md-4 col-form-label text-md-right">@lang('auth.email')</label>
+                            <div class="mb-3 row">
+								{{ Form::label('email',__('auth.email'),array('id'=>'','class'=>'col-md-4 col-form-label text-md-end')) }}
 
                                 <div class="col-md-6">
                                     <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus>
@@ -38,14 +37,14 @@
                                 </div>
                             </div>
 
-                            <div class="form-group row mb-0">
+                            <div class="mb-3 row mb-0">
                                 <div class="col-md-6 offset-md-4">
                                     <button type="submit" class="btn btn-primary">
                                         @lang('auth.send_password_link')
                                     </button>
                                 </div>
                             </div>
-                        </form>
+                            {{ Form::close() }}
                     </div>
                 </div>
             </div>

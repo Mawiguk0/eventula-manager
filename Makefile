@@ -23,7 +23,7 @@ endif
 
 
 # Run local dev
-start-local-dev: env-file-dev docker-lan app-build-clean-dev interactive
+start-local-dev: env-file-dev docker-lan app-build-clean-dev logs
 
 switch-database: purge-containers dev-database wait-mysql database-import stop interactive
 
@@ -39,14 +39,14 @@ interactive:
 
 # Stop all Containers
 stop:
-	$(DOCKER_COMPOSE) -f docker-compose-dev.yml stop
+	$(DOCKER_COMPOSE) -f docker-compose-dev.yml stop || true
 
 # Build from clean
 app-build-clean: folder-structure-prd layout-images-prd app-build-dep generate-key-prd dev wait-mysql database-migrate database-seed stop
 
 # Build dev from clean
 # app-build-clean-dev: folder-structure-dev layout-images-dev app-build-dep-dev purge-cache generate-key-dev dev wait-mysql database-migrate database-seed stop
-app-build-clean-dev: folder-structure-dev layout-images-dev app-build-dep-dev purge-cache generate-key-dev dev wait-mysql stop
+app-build-clean-dev: folder-structure-dev layout-images-dev app-build-dep-dev purge-cache generate-key-dev dev #wait-mysql stop
 
 # Build Dependencies
 app-build-dep: composer-install npm-install mix
@@ -74,6 +74,14 @@ ifeq ($(shell docker network ls --filter=NAME=lan | wc -l),1)
 endif
 endif
 
+local-prd-build-up:
+	$(DOCKER_COMPOSE) -f docker-compose-local-prd.yml up --build
+
+local-prd-up:
+	$(DOCKER_COMPOSE) -f docker-compose-local-prd.yml up
+
+local-prd-stop:
+	$(DOCKER_COMPOSE) -f docker-compose-local-prd.yml stop
 
 # Make .env
 logs:
@@ -136,7 +144,7 @@ database-rollback:
 
 # show newly generated Application Key
 generate-key-show-newkey:
-	docker run --rm composer:2.0 /bin/bash -c "echo 'generating key..' && composer create-project laravel/laravel example-app >/dev/null 2>/dev/null && cd example-app && php artisan key:generate >/dev/null 2>/dev/null && cat .env | grep APP_KEY=b"
+	docker run --rm composer:latest /bin/bash -c "echo 'generating key..' && composer create-project laravel/laravel example-app >/dev/null 2>/dev/null && cd example-app && php artisan key:generate >/dev/null 2>/dev/null && cat .env | grep APP_KEY=b"
 
 # Generate Application key
 generate-key-prd:
@@ -166,6 +174,14 @@ generate-images:
 generate-testuser:
 	docker exec eventula_manager_app php artisan db:seed --class=TestUserSeeder
 
+# Generate event - This will generate a sample event!
+generate-event:
+	docker exec eventula_manager_app php artisan db:seed --class=EventsSeeder
+
+# Generate event - This will generate a sample event!
+generate-games:
+	docker exec eventula_manager_app php artisan db:seed --class=GamesTableSeeder
+
 # Generate requireddatabase - This will erase your current settings!
 generate-requireddatabase:
 	docker exec eventula_manager_app php artisan db:seed --class=RequiredDatabaseSeeder --force
@@ -194,7 +210,7 @@ folder-structure-prd:
 	mkdir -p /src/storage/app/public/images/venues/ && \
 	mkdir -p /src/storage/app/public/images/main/ && \
 	mkdir -p /src/storage/app/public/images/shop/ && \
-	mkdir -p /src/storage/app/public/attachments/help/ "
+	mkdir -p /src/storage/app/public/attachments/help/"
 
 folder-structure-dev:
 	docker run --rm --name compkeygen --interactive \
@@ -205,7 +221,7 @@ folder-structure-dev:
 	mkdir -p /src/storage/app/public/images/venues/ && \
 	mkdir -p /src/storage/app/public/images/main/ && \
 	mkdir -p /src/storage/app/public/images/shop/ && \
-	mkdir -p /src/storage/app/public/attachments/help/ "
+	mkdir -p /src/storage/app/public/attachments/help/"
 
 # Create SSL Keypair for Development
 ssl-keygen:
@@ -216,49 +232,49 @@ composer-install:
 	docker run --rm --name compose-maintainence --interactive \
     --volume $(currentDir)/src:/app \
     --user 82:82 \
-    composer:2.0 install --ignore-platform-reqs --no-scripts
+    composer:latest composer install --ignore-platform-reqs --no-scripts
 
 # Install Dev PHP Dependencies via Composer
 composer-install-dev:
 	docker run --rm --name compose-maintainence-dev --interactive \
     -v $(currentDir)/src:/app \
     $(user) \
-    composer:2.0 install --ignore-platform-reqs --no-scripts --dev
+    composer:latest composer install --ignore-platform-reqs --no-scripts --dev
 
 # Update Dev PHP Dependencies via Composer
 composer-update:
 	docker run --rm --name compose-maintainence-update --interactive \
     --volume $(currentDir)/src:/app \
     $(user) \
-    composer:2.0 update --ignore-platform-reqs --no-scripts
+    composer:latest composer update --ignore-platform-reqs --no-scripts
 
 # list Composer outdated direct
 composer-outdated-direct:
 	docker run --rm --name compose-maintainence-update --interactive \
     --volume $(currentDir)/src:/app \
     $(user) \
-    composer:2.0 outdated -D
+    composer:latest composer outdated -D
 
 # list Composer outdated
 composer-outdated:
 	docker run --rm --name compose-maintainence-update --interactive \
     --volume $(currentDir)/src:/app \
     $(user) \
-    composer:2.0 outdated
+    composer:latest composer outdated
 
 # add PHP Dependencies via Composer - usage make composer-add-dep module=module/namehere
 composer-add-dep:
 	docker run --rm --name compose-maintainence-update --interactive \
     --volume $(currentDir)/src:/app \
     $(user) \
-    composer:2.0 require $(module) --ignore-platform-reqs --no-scripts
+    composer:latest composer require $(module) --ignore-platform-reqs --no-scripts
 
 # add Dev PHP Dependencies via Composer - usage make composer-add-dep module=module/namehere
 composer-add-dep-dev:
 	docker run --rm --name compose-maintainence-update --interactive \
     --volume $(currentDir)/src:/app \
     $(user) \
-    composer:2.0 require $(module) --ignore-platform-reqs --no-scripts --dev
+    composer:latest composer require $(module) --ignore-platform-reqs --no-scripts --dev
 
 # Install JS Dependencies via NPM
 npm-install:
@@ -363,6 +379,7 @@ purge-containers:
 	docker rm eventula_manager_app || true
 	docker rm eventula_manager_database || true
 	docker volume rm eventula_manager_database || true
+	docker volume rm eventula_manager_storage || true
 
 # Purge Caches
 purge-cache:
@@ -383,10 +400,16 @@ purge-files:
 	rm -rf /src/vendor/ ; \
 	rm -rf /src/node_modules/ ; \
 	rm -rf /src/public/css/* ; \
+	mkdir -p /src/public/css/font; \
+	mkdir -p /src/public/css/images; \
+	touch /src/public/css/font/.gitkeep; \
+	touch /src/public/css/images/.gitkeep; \
 	rm -rf /src/storage/app/public/images/gallery ; \
 	rm -rf /src/storage/app/public/images/events ; \
 	rm -rf /src/storage/app/public/images/venues ; \
 	rm -rf /src/storage/app/public/images/main ; \
+	rm -rf /src/storage/user/scss/*.css ; \
+	rm -rf /src/storage/user/scss/*.scss ; \
 	rm -rf /src/storage/logs/* ; \
 	rm -rf /src/public/storage || true"
 
@@ -453,11 +476,11 @@ endif
 wait-mysql: get-wait
 	docker run --rm --name mysqlwaiter --interactive --network="lan" \
 	-e WAIT_HOSTS="eventula_manager_database:3306" \
+	-e WAIT_AFTER="45" \
 	-v $(currentDir):/usr/src/app \
 	$(user) php:8-fpm-alpine /bin/sh -c " \
-	/usr/src/app/resources/wait &&\
-	sleep 45"
-	
+	/usr/src/app/resources/wait"
+
 
 
 ###############
