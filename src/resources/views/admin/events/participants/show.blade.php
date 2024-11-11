@@ -24,6 +24,10 @@
 
 @include ('layouts._partials._admin._event.dashMini')
 
+@if ($participant->revoked)
+	<div class="alert alert-danger">This participant has been revoked!</div>
+@endif
+
 <div class="row">
 	<div class="col-lg-8">
 
@@ -104,9 +108,13 @@
 						<p>{{ $participant->purchase->paypal_email }}</p>
 					@endif
 				@endif
-				@if ((!$participant->signed_in) && ((!$participant->ticket) || ($participant->purchase->status == "Success") ))
+				@if (
+        				(!$participant->revoked) &&
+        				(!$participant->signed_in) &&
+        				((!$participant->ticket) || ($participant->purchase->status == "Success"))
+					)
 					{{ Form::open(array('url'=>'/admin/events/' . $event->slug . '/participants/' . $participant->id . '/transfer')) }}
-						<div class="form-group">
+						<div class="mb-3">
 							{{ Form::label('event_id','Transfer to event',array('id'=>'','class'=>'')) }}
 							{{
 								Form::select(
@@ -120,23 +128,23 @@
 								)
 							}}
 						</div>
-						<div class="form-group">
+						<div class="mb-3">
 							<button type="submit" class="btn btn-success btn-block">Transfer</button>
 						</div>
 					{{ Form::close() }}
 					<hr>
 					{{ Form::open(array('url'=>'/admin/events/' . $event->slug . '/participants/' . $participant->id . '/signin')) }}
-						<div class="form-group">
+						<div class="mb-3">
 							<button type="submit" class="btn btn-success btn-block">Sign in</button>
 						</div>
 					{{ Form::close() }}
 					<hr>
-					<div class="form-group">
+					<div class="mb-3">
 						<button type="submit" class="btn btn-danger btn-block" disabled>Refund - <small>Coming soon</small></button>
 					</div>
 				@endif
 				@if ((!$participant->signed_in) && ($participant->ticket) && ($participant->purchase->status != "Success"))
-				<div class="form-group">
+				<div class="mb-3">
 					complete payment to transfer or sign in the user
 				</div>
 				@endif
@@ -144,7 +152,50 @@
 			</div>
 		</div>
 
+		@if (!$participant->revoked)
+		<div class="card mb-3">
+			<div class="card-header">Danger Zone</div>
+			<div class="card-body">
+			{{ Form::open([
+    				'url' => '/admin/events/' . $event->slug . '/participants/' . $participant->id . '/revoke',
+    				'onSubmit' => 'return ConfirmRevoke()'
+				]) }}
+				<div class="mb-3">
+					<button type="submit" class="btn btn-danger btn-block">Revoke</button>
+				</div>
+			{{ Form::close() }}
+			</div>
+		</div>
+		@endif
+
+		@if (config('admin.super_danger_zone'))
+		<div class="card mb-3">
+			<div class="card-header">Super Danger Zone</div>
+			<div class="card-body">
+			{{ Form::open([
+    				'url' => '/admin/events/' . $event->slug . '/participants/' . $participant->id,
+    				'onSubmit' => 'return ConfirmDelete()'
+				]) }}
+				{{ Form::hidden('_method', 'DELETE') }}
+				<div class="mb-3">
+					<div class="alert alert-danger">
+						This will remove the participant and related data, including clearing their seat. The underlying Purchase will not be removed.<br/>
+						This may have unintended side effects. Having a backup is highly recommended!
+					</div>
+					<button type="submit" class="btn btn-danger btn-block">Delete participant</button>
+				</div>
+			{{ Form::close() }}
+			</div>
+		</div>
+		@endif
+
 	</div>
 </div>
+
+<script type="text/javascript">
+	function ConfirmRevoke() {
+		return confirm('Are you sure you want to revoke this participant? This does not trigger any refund and this action can not be reverted!')
+	}
+</script>
 
 @endsection

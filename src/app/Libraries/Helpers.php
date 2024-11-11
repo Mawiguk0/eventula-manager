@@ -2,6 +2,8 @@
 
 namespace App\Libraries;
 
+use App\Event;
+use App\EventSeatingPlan;
 use Session;
 use Illuminate\Http\Request;
 use Exception;
@@ -17,7 +19,8 @@ use Throwable;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
-
+use HaydenPierce\ClassFinder\ClassFinder;
+ 
 class Helpers
 {
     // TODO - refactor - eg getGameSelectArray - specifially the selectArray part
@@ -79,16 +82,11 @@ class Helpers
         $return = array();
         if ($limit != 0) {
 
-            if ($pagename != "")
-            {
+            if ($pagename != "") {
                 $events = \App\Event::orderBy('start', $order)->paginate($limit, ['*'], $pagename);
-            }
-            else
-            {
+            } else {
                 $events = \App\Event::orderBy('start', $order)->paginate($limit);
             }
-
-
         } else {
             $events = \App\Event::orderBy('start', 'DESC')->get();
         }
@@ -507,11 +505,10 @@ class Helpers
      */
     public static function getEventulaEventTags()
     {
-        if (config('eventula.url') == "DISABLE")
-        {
+        if (config('eventula.url') == "DISABLE") {
             return false;
         }
-        
+
         $client = new Client();
         try {
             $response = $client->get(config('eventula.url') . '/api/tags/events');
@@ -784,8 +781,7 @@ class Helpers
     {
         $ticketCount = min($remainingcapacity > 0 ? $remainingcapacity : 10, $ticket->quantity > 0 ? $ticket->quantity : 10);
 
-        if (is_numeric($ticket->no_tickets_per_user) && $ticket->no_tickets_per_user > 0)
-        {
+        if (is_numeric($ticket->no_tickets_per_user) && $ticket->no_tickets_per_user > 0) {
             $ticketCount = min($ticket->no_tickets_per_user, $ticketCount);
         }
 
@@ -844,8 +840,7 @@ class Helpers
                         if (isset($commandPartValue) && !empty($commandPartValue)) {
                             $result = $result . $commandPartValue;
                         } else {
-                            if($secondChar)
-                            {
+                            if ($secondChar) {
                                 Session::flash('alert-danger', "Can not resolve command parameter \"$commandPart\"!");
                             }
                         }
@@ -853,11 +848,9 @@ class Helpers
                         unset($commandPartValue);
                     }
                 } catch (Exception $e) {
-                    if($secondChar)
-                    {
+                    if ($secondChar) {
                         Session::flash('alert-danger', 'error while resolving command!' . $command . ' ' . var_export($e->getMessage(), true));
                     }
-
                 }
             }
         }
@@ -895,24 +888,21 @@ class Helpers
 
     public static function rethrowIfDebug(\Throwable $e)
     {
-        if (env('APP_DEBUG'))
-        {
+        if (env('APP_DEBUG')) {
             throw $e;
         }
     }
 
-    public static function checkUserFields(User $user, Array $properties)
+    public static function checkUserFields(User $user, array $properties)
     {
         $result = true;
         foreach ($properties as $property) {
-            
-            if (!$user->$property || $user->$property == "" )
-            {
+
+            if (!$user->$property || $user->$property == "") {
                 $result = false;
             }
         }
         return $result;
-
     }
 
     public static function bytesToHuman($bytes)
@@ -924,5 +914,72 @@ class Helpers
         }
 
         return round($bytes, 2) . ' ' . $units[$i];
+    }
+
+    public static function getLatinAlphabetLetterIndex($alphabetLetter)
+    {
+        $latinAlphabetUpper = range('A', 'Z');
+
+        foreach ($latinAlphabetUpper as $key => $value) {
+            if ($value == $alphabetLetter) {
+                return $key + 1;
+            }
+        }
+
+        $latinAlphabetLower = range('a', 'z');
+
+        foreach ($latinAlphabetLower as $key => $value) {
+            if ($value == $alphabetLetter) {
+                return $key + 1;
+            }
+        }
+
+        return -1;
+    }
+
+    public static function getLatinAlphabetUpperLetterByIndex($index)
+    {
+        return range('A', 'Z')[$index - 1];
+    }
+
+    public static function getGameTemplates()
+    {
+        $classenames = ClassFinder::getClassesInNamespace('Database\Seeders\GameTemplates');
+
+        $gameTemplates = collect();
+
+        foreach ($classenames as $classname) {
+            $gameTemplates->put($classname, new $classname);
+        }
+        return $gameTemplates;
+    }
+
+    public static function getPoweredByLine()
+    {
+        return ' | powered by Lan2Play Eventula Manager';
+    }
+    public static function getSeoKeywords()
+    {
+        return explode(',',config('settings.seo_keywords'). ',Lan2Play Eventula Manager');
+    }    
+    
+    public static function getSeoDescription()
+    {
+        return config('settings.org_tagline'). Helpers::getPoweredByLine();
+    }
+
+    public static function getSeoCustomDescription($description)
+    {
+        return $description. Helpers::getPoweredByLine();
+    }
+
+    public static function getExistingSeatingPlansSelect() {
+        $result = [];
+        foreach(EventSeatingPlan::all(['id', 'name', 'event_id']) as $plan) {
+            $event = Event::where('id', $plan->event_id)->first();
+            $result[$event->display_name] ??= [];
+            $result[$event->display_name][$plan->id] = $plan->name;
+        }
+        return $result;
     }
 }

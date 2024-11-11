@@ -50,7 +50,6 @@ return [
         SimpleSoftwareIO\QrCode\QrCodeServiceProvider::class,
         Cviebrock\EloquentSluggable\ServiceProvider::class,
         Ignited\LaravelOmnipay\LaravelOmnipayServiceProvider::class,
-        Intervention\Image\ImageServiceProvider::class,
         Artesaos\SEOTools\Providers\SEOToolsServiceProvider::class,
         /*
          * Application Service Providers...
@@ -87,7 +86,7 @@ return [
         'File' => Illuminate\Support\Facades\File::class,
         'Gate' => Illuminate\Support\Facades\Gate::class,
         'Hash' => Illuminate\Support\Facades\Hash::class,
-        'Image' => Intervention\Image\Facades\Image::class,
+        'Image' => Intervention\Image\Laravel\Facades\Image::class,
         'Lang' => Illuminate\Support\Facades\Lang::class,
         'Log' => Illuminate\Support\Facades\Log::class,
         'Mail' => Illuminate\Support\Facades\Mail::class,
@@ -115,7 +114,7 @@ return [
         'Colors'                => App\Libraries\Colors::class,
         'Helpers'               => App\Libraries\Helpers::class,
         'FacebookPageWrapper'   => App\Libraries\Facebook\FacebookPageWrapper::class,
-        'Image'                 => Intervention\Image\Facades\Image::class,
+        'Image'                 => Intervention\Image\Laravel\Facades\Image::class,
         'SEOMeta'               => Artesaos\SEOTools\Facades\SEOMeta::class,
         'OpenGraph'             => Artesaos\SEOTools\Facades\OpenGraph::class,
         'Twitter'               => Artesaos\SEOTools\Facades\TwitterCard::class,

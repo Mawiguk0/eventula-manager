@@ -80,26 +80,26 @@
 			</div>
 			<div class="card-body">
 				{{ Form::open(array('url'=>'/admin/events/' . $event->slug . '/seating', 'files' => 'true')) }}
-					<div class="form-group">
+					<div class="mb-3">
 						{{ Form::label('name','Name',array('id'=>'','class'=>'')) }}
 						{{ Form::text('name', NULL ,array('id'=>'name','class'=>'form-control')) }}
 					</div>
-					<div class="form-group">
+					<div class="mb-3">
 							{{ Form::label('name_short','Short Name',array('id'=>'','class'=>'')) }}
 							{{ Form::text('name_short', NULL,array('id'=>'name_short','class'=>'form-control')) }}
 							<small>For display on Attendance Lists</small>
 						</div>
 					<div class="row">
-						<div class="col-lg-6 col-sm-12 form-group">
+						<div class="col-lg-6 col-sm-12 mb-3">
 							{{ Form::label('columns','Columns',array('id'=>'','class'=>'')) }}
 							{{ Form::text('columns', NULL ,array('id'=>'columns','class'=>'form-control')) }}
 						</div>
-						<div class="col-lg-6 col-sm-12 form-group">
+						<div class="col-lg-6 col-sm-12 mb-3">
 							{{ Form::label('rows','Rows',array('id'=>'','class'=>'')) }}
 							{{ Form::text('rows', NULL ,array('id'=>'rows','class'=>'form-control')) }}
 						</div>
 					</div>
-					<div class="form-group">
+					<div class="mb-3">
 						{{ Form::label('image','Seating Plan Image',array('id'=>'','class'=>'')) }}
 						{{ Form::file('image',array('id'=>'image','class'=>'form-control')) }}
 					</div>
@@ -108,6 +108,38 @@
 			</div>
 		</div>
 
+		<div class="card mb-3">
+			<div class="card-header">
+				<i class="fa fa-copy fa-fw"></i>Duplicate existing seating plan
+			</div>
+			<div class="card-body">
+				{{ Form::open(['url' => "/admin/events/{$event->slug}/seating"]) }}
+				<div class="mb-3">
+					{{ Form::label('duplicate', 'Copy from') }}
+					{{ Form::select(
+							'duplicate',
+							Helpers::getExistingSeatingPlansSelect(),
+							'',
+							[
+								'id' => 'duplicate',
+								'class'=> 'form-control'
+							]
+					) }}
+				</div>
+				<div class="mb-3">
+					{{ Form::label('name-override', 'Name override') }}
+					{{ Form::text('name_override', null, ['id' => 'name-override', 'class' => 'form-control']) }}
+					<div class="form-text">Name for copy. Leave empty to copy original name</div>
+				</div>
+				<div class="mb-3">
+					{{ Form::label('short-name-override', 'Short name override') }}
+					{{ Form::text('short_name_override', null, ['id' => 'short-name-override', 'class' => 'form-control']) }}
+					<div class="form-text">Short name for copy. Leave empty to copy original short name</div>
+				</div>
+				<button type="submit" class="btn btn-success btn-block">Submit</button>
+				{{ Form::close() }}
+			</div>
+		</div>
 	</div>
 </div>
 

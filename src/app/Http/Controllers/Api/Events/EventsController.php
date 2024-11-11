@@ -121,7 +121,7 @@ class EventsController extends Controller
         }
 
         if (!$event) {
-            abort(404);
+            abort(404, "Event not found.");
         }
 
         $return = [

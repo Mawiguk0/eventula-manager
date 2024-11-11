@@ -305,7 +305,7 @@ class ShopController extends Controller
         $uploadcount = 0;
         foreach ($files as $file) {
             $imageName  = $item->slug . '-' . $file->getClientOriginalName();
-            Image::make($file)->save(public_path() . $destinationPath . $imageName);
+            Image::read($file)->save(public_path() . $destinationPath . $imageName);
             $item->addImage($destinationPath . $imageName);
             $uploadcount++;
         }

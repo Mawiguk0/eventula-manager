@@ -14,7 +14,7 @@ class EditEssentialInfoEventsTable extends Migration
     public function up()
     {
         Schema::table('events', function (Blueprint $table) {
-            $table->string('essential_info', 4294967295)->nullable()->after('desc_short')->change();            ;
+            $table->string('essential_info', 4294967295)->nullable()->after('desc_short')->change();
         });
     }
 

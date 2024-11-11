@@ -1,12 +1,17 @@
 # Initialize variables
 ifeq ($(OS),Windows_NT)
-currentDir = $(patsubst %/,%, $(subst /mnt, ,$(shell wsl wslpath -u $(strip $(dir $(realpath $(lastword $(MAKEFILE_LIST))))))))
+currentDir = $(patsubst %/,%, $(lastword $(subst /host, ,$(shell wsl wslpath -u $(strip $(dir $(realpath $(lastword $(MAKEFILE_LIST)))))))))
 userId = $(shell wsl id -u)
 groupId = $(shell wsl id -g)
 else
 currentDir = $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 userId = $(shell id -u)
 groupId = $(shell id -g)
+endif
+
+ifeq (userId,0)
+userId = 1000
+groupId = 1000
 endif
 
 user = --user $(userId):$(groupId)
@@ -21,9 +26,8 @@ else
 endif
 endif
 
-
 # Run local dev
-start-local-dev: env-file-dev docker-lan app-build-clean-dev interactive
+start-local-dev: env-file-dev docker-lan app-build-clean-dev logs
 
 switch-database: purge-containers dev-database wait-mysql database-import stop interactive
 
@@ -39,14 +43,13 @@ interactive:
 
 # Stop all Containers
 stop:
-	$(DOCKER_COMPOSE) -f docker-compose-dev.yml stop
+	$(DOCKER_COMPOSE) -f docker-compose-dev.yml stop ||: true
 
 # Build from clean
 app-build-clean: folder-structure-prd layout-images-prd app-build-dep generate-key-prd dev wait-mysql database-migrate database-seed stop
 
 # Build dev from clean
-# app-build-clean-dev: folder-structure-dev layout-images-dev app-build-dep-dev purge-cache generate-key-dev dev wait-mysql database-migrate database-seed stop
-app-build-clean-dev: folder-structure-dev layout-images-dev app-build-dep-dev purge-cache generate-key-dev dev wait-mysql stop
+app-build-clean-dev: folder-structure-dev layout-images-dev app-build-dep-dev purge-cache generate-key-dev dev #wait-mysql stop
 
 # Build Dependencies
 app-build-dep: composer-install npm-install mix
@@ -65,7 +68,7 @@ docs-html:
 docker-lan:
 ifeq ($(OS),Windows_NT)
 #not tested!
-ifeq ($(shell docker network ls --filter=NAME=lan | Measure-Object –Line),1)
+ifeq ($(shell powershell -Command "docker network ls --filter NAME=lan | Measure-Object -Line | Select-Object -ExpandProperty Lines"),1)
 	docker network create lan
 endif
 else
@@ -74,6 +77,14 @@ ifeq ($(shell docker network ls --filter=NAME=lan | wc -l),1)
 endif
 endif
 
+local-prd-build-up:
+	$(DOCKER_COMPOSE) -f docker-compose-local-prd.yml up --build
+
+local-prd-up:
+	$(DOCKER_COMPOSE) -f docker-compose-local-prd.yml up
+
+local-prd-stop:
+	$(DOCKER_COMPOSE) -f docker-compose-local-prd.yml stop
 
 # Make .env
 logs:
@@ -136,7 +147,7 @@ database-rollback:
 
 # show newly generated Application Key
 generate-key-show-newkey:
-	docker run --rm composer:2.0 /bin/bash -c "echo 'generating key..' && composer create-project laravel/laravel example-app >/dev/null 2>/dev/null && cd example-app && php artisan key:generate >/dev/null 2>/dev/null && cat .env | grep APP_KEY=b"
+	docker run --rm composer:latest /bin/bash -c "echo 'generating key..' && composer create-project laravel/laravel example-app >/dev/null 2>/dev/null && cd example-app && php artisan key:generate >/dev/null 2>/dev/null && cat .env | grep APP_KEY=b"
 
 # Generate Application key
 generate-key-prd:
@@ -166,6 +177,22 @@ generate-images:
 generate-testuser:
 	docker exec eventula_manager_app php artisan db:seed --class=TestUserSeeder
 
+# Generate event - This will generate a sample event!
+generate-event:
+	docker exec eventula_manager_app php artisan db:seed --class=EventsSeeder
+
+# Generate test cs2 matchmaking match with a demo - This will generate a sample cs2 matchmaking match with a demo (needs the generate-games command before running)! example: make generate-cs2mm playeroneid=useridhere playertwoid=useridhere democount=democounthere status=statushere
+generate-cs2mm:
+	docker exec -e playeroneid=$(playeroneid) -e playertwoid=$(playertwoid) -e democount=$(democount) -e status=$(status) eventula_manager_app php artisan db:seed --class=TestCs2MatchMakingSeeder
+
+# Generate demo(s) into existing challonge matches  (needs the generate-games command before running)! example: make generate-demos-tournament democount=democounthere challongematchid=challongematchidhere
+generate-demos-tournament:
+	docker exec -e democount=$(democount) -e challongematchid=$(challongematchid) eventula_manager_app php artisan db:seed --class=TestTournamentDemoSeeder
+
+# Generate event - This will generate a sample event!
+generate-games:
+	docker exec eventula_manager_app php artisan db:seed --class=GamesTableSeeder
+
 # Generate requireddatabase - This will erase your current settings!
 generate-requireddatabase:
 	docker exec eventula_manager_app php artisan db:seed --class=RequiredDatabaseSeeder --force
@@ -194,7 +221,7 @@ folder-structure-prd:
 	mkdir -p /src/storage/app/public/images/venues/ && \
 	mkdir -p /src/storage/app/public/images/main/ && \
 	mkdir -p /src/storage/app/public/images/shop/ && \
-	mkdir -p /src/storage/app/public/attachments/help/ "
+	mkdir -p /src/storage/app/public/attachments/help/"
 
 folder-structure-dev:
 	docker run --rm --name compkeygen --interactive \
@@ -205,7 +232,7 @@ folder-structure-dev:
 	mkdir -p /src/storage/app/public/images/venues/ && \
 	mkdir -p /src/storage/app/public/images/main/ && \
 	mkdir -p /src/storage/app/public/images/shop/ && \
-	mkdir -p /src/storage/app/public/attachments/help/ "
+	mkdir -p /src/storage/app/public/attachments/help/"
 
 # Create SSL Keypair for Development
 ssl-keygen:
@@ -216,49 +243,49 @@ composer-install:
 	docker run --rm --name compose-maintainence --interactive \
     --volume $(currentDir)/src:/app \
     --user 82:82 \
-    composer:2.0 install --ignore-platform-reqs --no-scripts
+    composer:latest composer install --ignore-platform-reqs --no-scripts
 
 # Install Dev PHP Dependencies via Composer
 composer-install-dev:
 	docker run --rm --name compose-maintainence-dev --interactive \
     -v $(currentDir)/src:/app \
     $(user) \
-    composer:2.0 install --ignore-platform-reqs --no-scripts --dev
+    composer:latest composer install --ignore-platform-reqs --no-scripts --dev
 
 # Update Dev PHP Dependencies via Composer
 composer-update:
 	docker run --rm --name compose-maintainence-update --interactive \
     --volume $(currentDir)/src:/app \
     $(user) \
-    composer:2.0 update --ignore-platform-reqs --no-scripts
+    composer:latest composer update --ignore-platform-reqs --no-scripts
 
 # list Composer outdated direct
 composer-outdated-direct:
 	docker run --rm --name compose-maintainence-update --interactive \
     --volume $(currentDir)/src:/app \
     $(user) \
-    composer:2.0 outdated -D
+    composer:latest composer outdated -D --ignore-platform-reqs
 
 # list Composer outdated
 composer-outdated:
 	docker run --rm --name compose-maintainence-update --interactive \
     --volume $(currentDir)/src:/app \
     $(user) \
-    composer:2.0 outdated
+    composer:latest composer outdated --ignore-platform-reqs
 
 # add PHP Dependencies via Composer - usage make composer-add-dep module=module/namehere
 composer-add-dep:
 	docker run --rm --name compose-maintainence-update --interactive \
     --volume $(currentDir)/src:/app \
     $(user) \
-    composer:2.0 require $(module) --ignore-platform-reqs --no-scripts
+    composer:latest composer require $(module) --ignore-platform-reqs --no-scripts
 
 # add Dev PHP Dependencies via Composer - usage make composer-add-dep module=module/namehere
 composer-add-dep-dev:
 	docker run --rm --name compose-maintainence-update --interactive \
     --volume $(currentDir)/src:/app \
     $(user) \
-    composer:2.0 require $(module) --ignore-platform-reqs --no-scripts --dev
+    composer:latest composer require $(module) --ignore-platform-reqs --no-scripts --dev
 
 # Install JS Dependencies via NPM
 npm-install:
@@ -266,7 +293,15 @@ npm-install:
 	-v $(currentDir)/src:/usr/src/app \
 	-w /usr/src/app \
     --user 82:82 \
-	node:20.3 /bin/bash -ci "npm install --no-audit && npm run production"
+	node:22.9 /bin/bash -ci "npm install --no-audit && npm run production"
+
+# Install PRD JS Dependencies via NPM locally
+npm-install-local:
+	docker run --rm --name js-maintainence-dev --interactive \
+	-v $(currentDir)/src:/usr/src/app \
+	-w /usr/src/app \
+	$(user) \
+	node:22.9 /bin/bash -ci "npm install --no-audit && npm run production"
 
 # Install JS Dependencies via NPM
 npm-install-gh:
@@ -274,7 +309,7 @@ npm-install-gh:
 	-v $(currentDir)/src:/usr/src/app \
 	-w /usr/src/app \
     --user 0 \
-	node:20.3 /bin/bash -ci "npm install --no-audit && npm run production && chown -R $(userId):$(groupId) /usr/src/app"
+	node:22.9 /bin/bash -ci "npm install --no-audit && npm run production && chown -R $(userId):$(groupId) /usr/src/app"
 
 # Install Dev JS Dependencies via NPM
 npm-install-dev:
@@ -282,7 +317,7 @@ npm-install-dev:
 	-v $(currentDir)/src:/usr/src/app \
 	-w /usr/src/app \
 	$(user) \
-	node:20.3 /bin/bash -ci "npm install --no-audit && npm run dev"
+	node:22.9 /bin/bash -ci "npm install --no-audit && npm run dev"
 
 #list npm package - usage make npm-ls module=module
 npm-ls:
@@ -290,7 +325,7 @@ npm-ls:
 	-v $(currentDir)/src:/usr/src/app \
 	-w /usr/src/app \
 	$(user) \
-	node:20.3 /bin/bash -ci "npm ls $(module)"
+	node:22.9 /bin/bash -ci "npm ls $(module)"
 
 #update npm packages - usage make npm-update
 npm-update:
@@ -298,7 +333,7 @@ npm-update:
 	-v $(currentDir)/src:/usr/src/app \
 	-w /usr/src/app \
 	$(user) \
-	node:20.3 /bin/bash -ci "npm update"
+	node:22.9 /bin/bash -ci "npm update"
 
 #audit npm packages - usage make npm-audit
 npm-audit:
@@ -306,7 +341,7 @@ npm-audit:
 	-v $(currentDir)/src:/usr/src/app \
 	-w /usr/src/app \
 	$(user) \
-	node:20.3 /bin/bash -ci "npm audit"
+	node:22.9 /bin/bash -ci "npm audit"
 
 #audit fix npm packages - usage make npm-audit-fix
 npm-audit-fix:
@@ -314,7 +349,7 @@ npm-audit-fix:
 	-v $(currentDir)/src:/usr/src/app \
 	-w /usr/src/app \
 	$(user) \
-	node:20.3 /bin/bash -ci "npm audit fix"
+	node:22.9 /bin/bash -ci "npm audit fix"
 
 
 #list outdated npm packages
@@ -323,7 +358,7 @@ npm-outdated:
 	-v $(currentDir)/src:/usr/src/app \
 	-w /usr/src/app \
 	$(user) \
-	node:20.3 /bin/bash -ci "npm outdated"
+	node:22.9 /bin/bash -ci "npm outdated"
 
 #rebuild node
 npm-rebuild:
@@ -331,7 +366,7 @@ npm-rebuild:
 	-v $(currentDir)/src:/usr/src/app \
 	-w /usr/src/app \
 	$(user) \
-	node:20.3 /bin/bash -ci "npm rebuild"
+	node:22.9 /bin/bash -ci "npm rebuild"
 
 # npm mix Runner
 mix:
@@ -339,22 +374,32 @@ mix:
 	-v $(currentDir)/src:/usr/src/app \
 	-w /usr/src/app \
     --user 82:82 \
-	node:20.3 /bin/bash -ci "npm run production"
+	node:22.9 /bin/bash -ci "npm run production"
 
 mix-dev:
 	docker run --rm --name js-maintainence-dev --interactive \
 	-v $(currentDir)/src:/usr/src/app \
 	-w /usr/src/app \
 	$(user) \
-	node:20.3 /bin/bash -ci "npm run development"
+	node:22.9 /bin/bash -ci "npm run development"
 
 # Purge Containers
 purge-containers:
+ifeq ($(OS),Windows_NT)
+	$(DOCKER_COMPOSE) -f docker-compose-dev.yml stop ||: true
+	$(DOCKER_COMPOSE) -f docker-compose-dev.yml rm -vf ||: true
+	docker rm eventula_manager_app ||: true
+	docker rm eventula_manager_database ||: true
+	docker volume rm eventula_manager_database ||: true
+	docker volume rm eventula_manager_storage ||: true
+else
 	$(DOCKER_COMPOSE) -f docker-compose-dev.yml -p eventula_manager stop || true
 	$(DOCKER_COMPOSE) -f docker-compose-dev.yml -p eventula_manager rm -vf || true
 	docker rm eventula_manager_app || true
 	docker rm eventula_manager_database || true
 	docker volume rm eventula_manager_database || true
+	docker volume rm eventula_manager_storage || true
+endif
 
 # Purge Caches
 purge-cache:
@@ -375,10 +420,16 @@ purge-files:
 	rm -rf /src/vendor/ ; \
 	rm -rf /src/node_modules/ ; \
 	rm -rf /src/public/css/* ; \
+	mkdir -p /src/public/css/font; \
+	mkdir -p /src/public/css/images; \
+	touch /src/public/css/font/.gitkeep; \
+	touch /src/public/css/images/.gitkeep; \
 	rm -rf /src/storage/app/public/images/gallery ; \
 	rm -rf /src/storage/app/public/images/events ; \
 	rm -rf /src/storage/app/public/images/venues ; \
 	rm -rf /src/storage/app/public/images/main ; \
+	rm -rf /src/storage/user/scss/*.css ; \
+	rm -rf /src/storage/user/scss/*.scss ; \
 	rm -rf /src/storage/logs/* ; \
 	rm -rf /src/public/storage || true"
 
@@ -389,7 +440,11 @@ database-upgrade:
 
 # execute mysql command usage make database-command command=sqlcommandhere
 database-command:
+ifeq ($(OS),Windows_NT)
+	powershell.exe -Command "echo \"use eventula_manager_database; $(command)\"| docker exec -i eventula_manager_database mysql -u eventula_manager -p'password'"
+else
 	echo "use eventula_manager_database; $(command)" | docker exec -i eventula_manager_database mysql -u eventula_manager -p'password'
+endif
 
 # import mysql database usage make database-command dbfile=dbfile.sql
 ifndef dbfile
@@ -445,11 +500,11 @@ endif
 wait-mysql: get-wait
 	docker run --rm --name mysqlwaiter --interactive --network="lan" \
 	-e WAIT_HOSTS="eventula_manager_database:3306" \
+	-e WAIT_AFTER="45" \
 	-v $(currentDir):/usr/src/app \
 	$(user) php:8-fpm-alpine /bin/sh -c " \
-	/usr/src/app/resources/wait &&\
-	sleep 45"
-	
+	/usr/src/app/resources/wait"
+
 
 
 ###############

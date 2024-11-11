@@ -121,7 +121,7 @@ class GamesController extends Controller
 
         if ($request->file('image_thumbnail')) {
             $imageName  = 'thumbnail.' . $request->file('image_thumbnail')->getClientOriginalExtension();
-            Image::make($request->file('image_thumbnail'))
+            Image::read($request->file('image_thumbnail'))
                 ->resize(500, 500)
                 ->save(public_path() . $destinationPath . $imageName);
             $game->image_thumbnail_path = $destinationPath . $imageName;
@@ -133,7 +133,7 @@ class GamesController extends Controller
 
         if ($request->file('image_header')) {
             $imageName  = 'header.' . $request->file('image_header')->getClientOriginalExtension();
-            Image::make($request->file('image_header'))
+            Image::read($request->file('image_header'))
                 ->resize(1600, 400)
                 ->save(public_path() . $destinationPath . $imageName);
             $game->image_header_path = $destinationPath . $imageName;
@@ -221,7 +221,7 @@ class GamesController extends Controller
         if ($request->file('image_thumbnail')) {
             Storage::delete($game->image_thumbnail_path);
             $imageName  = 'thumbnail.' . $request->file('image_thumbnail')->getClientOriginalExtension();
-            Image::make($request->file('image_thumbnail'))
+            Image::read($request->file('image_thumbnail'))
                 ->resize(500, 500)
                 ->save(public_path() . $destinationPath . $imageName);
             $game->image_thumbnail_path = $destinationPath . $imageName;
@@ -234,7 +234,7 @@ class GamesController extends Controller
         if ($request->file('image_header')) {
             Storage::delete($game->image_header_path);
             $imageName  = 'header.' . $request->file('image_header')->getClientOriginalExtension();
-            Image::make($request->file('image_header'))
+            Image::read($request->file('image_header'))
                 ->resize(1600, 400)
                 ->save(public_path() . $destinationPath . $imageName);
             $game->image_header_path = $destinationPath . $imageName;

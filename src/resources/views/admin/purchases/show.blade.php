@@ -68,9 +68,12 @@
 							@endforeach
 						@elseif (!$purchase->participants->isEmpty())
 							@foreach ($purchase->participants as $participant)
-								<tr>
+								<tr @class(['table-warning' => $participant->revoked])>
 									<td>
 										{{ $participant->ticket->name }} for {{ $participant->event->display_name }}
+										@if ($participant->revoked)
+											<span class="badge text-bg-warning">Participant revoked</span>
+										@endif
 									</td>
 									<td>
 										1
@@ -104,12 +107,12 @@
 
 
 
-					<li class="list-group-item list-group-item-info"><strong>Purchase ID: <span class="float-right">{{ $purchase->id }}</span></strong></li>
+					<li class="list-group-item list-group-item-info"><strong>Purchase ID: <span class="float-end">{{ $purchase->id }}</span></strong></li>
 					<li class="list-group-item @if(isset($purchase->user)) list-group-item-info @else list-group-item-danger @endif">
 						<strong>
 							@if(isset($purchase->user))
 								User:
-								<span class="float-right">
+								<span class="float-end">
 									{{ $purchase->user->username }}
 									@if ($purchase->user->steamid)
 										- <span class="text-muted"><small>Steam: {{ $purchase->user->steamname }}</small></span>
@@ -120,21 +123,21 @@
 							@endif
 						</strong>
 					</li>
-					<li class="list-group-item @if(isset($purchase->user)) list-group-item-info @else list-group-item-danger @endif"><strong>Name: <span class="float-right">@if(isset($purchase->user)) {{ $purchase->user->firstname }} {{ $purchase->user->surname }}@else User deleted @endif</span></strong></li>
-					<li class="list-group-item @if ((strtolower($purchase->status) != 'success') && (strtolower($purchase->status) != 'pending')) list-group-item-danger @endif @if (strtolower($purchase->status) == 'success') list-group-item-success @endif @if (strtolower($purchase->status) == 'pending') list-group-item-warning @endif"><strong>Status: <span class="float-right">{{ $purchase->status }}</span></strong></li>
-					<li class="list-group-item list-group-item-info"><strong>Type: <span class="float-right">{{ $purchase->type }}</span></strong></li>
+					<li class="list-group-item @if(isset($purchase->user)) list-group-item-info @else list-group-item-danger @endif"><strong>Name: <span class="float-end">@if(isset($purchase->user)) {{ $purchase->user->firstname }} {{ $purchase->user->surname }}@else User deleted @endif</span></strong></li>
+					<li class="list-group-item @if ((strtolower($purchase->status) != 'success') && (strtolower($purchase->status) != 'pending')) list-group-item-danger @endif @if (strtolower($purchase->status) == 'success') list-group-item-success @endif @if (strtolower($purchase->status) == 'pending') list-group-item-warning @endif"><strong>Status: <span class="float-end">{{ $purchase->status }}</span></strong></li>
+					<li class="list-group-item list-group-item-info"><strong>Type: <span class="float-end">{{ $purchase->type }}</span></strong></li>
 					@if ($purchase->paypal_email != null)
 						<li class="list-group-item list-group-item-info">
-							<strong>Paypal Email: <span class="float-right">{{ $purchase->paypal_email }}</span></strong>
+							<strong>Paypal Email: <span class="float-end">{{ $purchase->paypal_email }}</span></strong>
 						</li>
 					@endif
-					<li class="list-group-item list-group-item-info"><strong>Transaction ID: <span class="float-right">{{ $purchase->transaction_id }}</span></strong></li>
-					<li class="list-group-item list-group-item-info"><strong>Timestamp: <span class="float-right">{{ $purchase->created_at }}</span></strong></li>
+					<li class="list-group-item list-group-item-info"><strong>Transaction ID: <span class="float-end">{{ $purchase->transaction_id }}</span></strong></li>
+					<li class="list-group-item list-group-item-info"><strong>Timestamp: <span class="float-end">{{ $purchase->created_at }}</span></strong></li>
 				</ul>
 				<div class="mb-3">
 				</div>
 				@if (strtolower($purchase->status) == 'pending')
-				<div class="form-group">	
+				<div class="mb-3">	
 					
 					{{ Form::open(array('url'=>'/admin/purchases/' . $purchase->id . '/setSuccess', 'onsubmit' => 'return ConfirmSubmit()')) }}
 					{{ Form::hidden('_method', 'GET') }}
@@ -145,15 +148,23 @@
 				</div>
 				@endif
 				@if ($purchase->order)
-				<div class="form-group">	
+				<div class="mb-3">	
 					<a href="/admin/orders/{{ $purchase->order->id }}"><button class="btn btn-block btn-success">View Order</button></a>
 				</div>
 				@endif
 
 				@if (count($purchase->participants) > 0)
-				<div class="form-group">	
+				<div class="mb-3">	
 					@foreach ($purchase->participants as $participant)
-						<a href="/admin/events/{{ $participant->event->slug }}/participants/{{ $participant->id }}"><button class="btn btn-block btn-success">View Participant - {{ $participant->user->username }}</button></a>
+						<a href="/admin/events/{{ $participant->event->slug }}/participants/{{ $participant->id }}">
+							<button @class(["btn", "btn-block",
+											"btn-warning" => $participant->revoked,
+											"btn-success" => !$participant->revoked])>
+								View Participant - {{ $participant->user->username }}
+								@if ($participant->revoked)
+									(revoked)
+								@endif
+							</button></a>
 					@endforeach
 				</div>
 				@endif
@@ -161,6 +172,24 @@
 
 			</div>
 		</div>
+
+		@if (config('admin.super_danger_zone'))
+		<div class="card mb-3">
+			<div class="card-header">Super Danger Zone</div>
+			<div class="card-body">
+			{{ Form::open([
+    				'url' => '/admin/purchases/' . $purchase->id,
+    				'onSubmit' => 'return ConfirmDelete()'
+				]) }}
+				{{ Form::hidden('_method', 'DELETE') }}
+				<div class="mb-3">
+					<div class="alert alert-danger">Deleting a purchase will also remove related data, like event participants. This has the potential to break stuff!<br/>Having a backup is highly recommended!</div>
+					<button type="submit" class="btn btn-danger btn-block">Delete purchase</button>
+				</div>
+				{{ Form::close() }}
+			</div>
+		</div>
+		@endif
 	</div>
 </div>
 

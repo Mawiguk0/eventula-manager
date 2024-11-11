@@ -31,13 +31,13 @@
 				<i class="fa fa-users fa-fw"></i> All Participants
 				{{ Form::open(array('url'=>'/admin/events/' . $event->slug . '/participants/signoutall' , 'onsubmit' => 'return ConfirmSignOutAll()')) }}
 				{{ Form::hidden('_method', 'GET') }}
-				<button type="submit" class="btn btn-danger btn-sm float-right mr-3 ml-3">Sign Out all Participants</button>
+				<button type="submit" class="btn btn-danger btn-sm float-end me-3 ms-3">Sign Out all Participants</button>
 				{{ Form::close() }}
 				<a href="/admin/events/{{ $event->slug }}/tickets#freebies" class="btn btn-info btn-sm float-right">Freebies</a>
 			</div>
 			<div class="card-body">
 				<div class="dataTable_wrapper">
-					<table width="100%" class="table table-striped table-hover" id="seating_table">
+					<table width="100%" class="table table-striped table-hover participants-table" id="seating_table">
 						<thead>
 							<tr>
 								<th>User</th>
@@ -53,7 +53,7 @@
 						</thead>
 						<tbody>
 							@foreach ($participants as $participant)
-							<tr class="odd gradeX">
+							<tr @class(["odd", "gradeX", "table-danger revoked" => $participant->revoked])>
 								<td>
 									{{ $participant->user->username }}
 									@if ($participant->user->steamid)

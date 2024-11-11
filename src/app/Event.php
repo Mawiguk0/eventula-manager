@@ -21,7 +21,7 @@ class Event extends Model
      */
     protected $table = 'events';
 
-    protected $dates = ['deleted_at'];
+    protected $casts = ['deleted_at' => 'datetime'];
 
     /**
      * The attributes that are mass assignable.
@@ -52,6 +52,8 @@ class Event extends Model
 
     protected static function boot()
     {
+        // Remember There are is also an ApiGlobalScopesMiddleware used here
+
         parent::boot();
 
         $admin = false;
@@ -89,6 +91,10 @@ class Event extends Model
      * Relationships
      */
     public function eventParticipants()
+    {
+        return $this->hasMany('App\EventParticipant')->where('revoked', '=', 0);
+    }
+    public function allEventParticipants()
     {
         return $this->hasMany('App\EventParticipant');
     }
@@ -167,10 +173,14 @@ class Event extends Model
      * @param  $seat
      * @return EventSeating
      */
-    public function getSeat($seatingPlanId, $seat)
+    public function getSeat($seatingPlanId, $seatColumn, $seatRow)
     {
         $seatingPlan = $this->seatingPlans()->find($seatingPlanId);
-        return $seatingPlan->seats()->where('seat', ucwords($seat))->first();
+        $clauses = [
+            'column'    => $seatColumn,
+            'row'       => $seatRow,
+        ];
+        return $seatingPlan->seats()->where($clauses)->first();
     }
 
     /**
@@ -237,16 +247,26 @@ class Event extends Model
         $return = array();
         foreach ($this->eventParticipants as $participant) {
             if (($participant->staff || $participant->free) || @$participant->ticket->seatable) {
-                $seat = 'NOT SEATED';
+                $seat = 'Not Seated';
+                $seatingPlanName = "";
                 if (!empty($participant->seat)) {
-                    $seat = $participant->seat->seat;
+                    if ($participant->seat->seatingPlan) {
+                        $seatingPlanName = $participant->seat->seatingPlan->getName();
+                    }
+                    $seat = $participant->seat->getName();
+                }                
+                
+                if(!empty($participant->ticket->name)) {
+                    $text = $participant->user->username . ' - ' . $participant->ticket->name . ' - ' . $seatingPlanName . ' - ' . $seat;
+                } else {
+                    $text = $participant->user->username . ' - ' . $seatingPlanName . ' - ' . $seat;
                 }
-                $text = $participant->user->username . ' - ' . $seat;
+
                 if ($participant->staff) {
-                    $text = $participant->user->username . ' - ' . $seat . ' - Staff Ticket';
+                    $text = $participant->user->username . ' - ' . 'Staff Ticket - ' . $seatingPlanName . ' - ' . $seat;
                 }
                 if ($participant->free) {
-                    $text = $participant->user->username . ' - ' . $seat . ' - Free Ticket';
+                    $text = $participant->user->username . ' - ' . 'Free Ticket - ' . $seatingPlanName . ' - ' . $seat;
                 }
                 $return[$participant->id] = $text;
             }

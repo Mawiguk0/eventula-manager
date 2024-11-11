@@ -18,11 +18,11 @@ class CreateEventTicketsTable extends Migration {
 			$table->string('name');
 			$table->integer('event_id')->unsigned()->index();
 			$table->string('type');
-			$table->float('price', 10, 0);
+			$table->float('price', precision: 10);
 			$table->boolean('seatable');
 			$table->dateTime('sale_start')->nullable();
 			$table->dateTime('sale_end')->nullable();
-			$table->float('sale_price', 10, 0)->nullable();
+			$table->float('sale_price', precision: 10)->nullable();
 			$table->timestamps();
 
 			## Foreign Keys
@@ -42,7 +42,7 @@ class CreateEventTicketsTable extends Migration {
 		Schema::table('event_tickets', function(Blueprint $table)
 		{
             $table->dropForeign('event_tickets_event_id_foreign');
-		});        
+		});
 		Schema::drop('event_tickets');
 	}
 

@@ -9,4 +9,6 @@ return [
     */
     'gallery' => 'Galería',
     'event' => 'Evento:',
+    'view_album' => 'Ver álbum',
+    'date' => 'Fecha:',
 ];

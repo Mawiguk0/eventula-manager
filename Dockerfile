@@ -1,16 +1,15 @@
-# FROM th0rn0/php-nginx-base:latest
 FROM lan2play/docker-php-nginx-base:latest
 LABEL org.opencontainers.image.authors="Thornton Phillis (Th0rn0@lanops.co.uk), Alexader Volz (Alexander@volzit.de)"
 
 # ENV - App Defaults
 
-ENV UUID 82
-ENV GUID 82
-ENV ENABLE_HTTPS false
-ENV LOG_FILES false
-ENV ANALYTICS_PROVIDER GoogleAnalytics
-ENV DB_MIGRATE false
-ENV TIMEZONE UTC
+ENV UUID=82
+ENV GUID=82
+ENV ENABLE_HTTPS=false
+ENV LOG_FILES=false
+ENV ANALYTICS_PROVIDER=GoogleAnalytics
+ENV DB_MIGRATE=false
+ENV TIMEZONE=UTC
 
 #versioning
 ARG BUILDNUMBER
@@ -44,6 +43,7 @@ RUN sed -i 's/memory_limit = 128M/memory_limit = 512M/' /usr/local/etc/php/php.i
 RUN sed -i 's/upload_max_filesize = 2M/upload_max_filesize = 512M/' /usr/local/etc/php/php.ini
 RUN sed -i 's/post_max_size = 8M/post_max_size = 512M/' /usr/local/etc/php/php.ini
 RUN sed -i 's/max_execution_time = 30/max_execution_time = 240/' /usr/local/etc/php/php.ini
+RUN sed -i 's/default_socket_timeout = 60/default_socket_timeout = 240/' /usr/local/etc/php/php.ini
 
 
 

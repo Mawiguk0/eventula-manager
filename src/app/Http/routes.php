@@ -10,6 +10,11 @@ if (config('app.debug') === true) {
 }
 
 /**
+ * Image Converter
+ */
+Route::get('{image}', 'Api\Images\WebpController@convert')->where('image', '.*\.webp');
+
+/**
  * Install
  */
 Route::group(['middleware' => ['web', 'notInstalled']], function () {
@@ -24,15 +29,12 @@ Route::group(['middleware' => ['installed']], function () {
 
 
 
-        /**
-         * Image Converter
-         */
-        Route::get('{image}', 'Api\Images\WebpController@convert')->where('image', '.*\.webp');
+
 
         /**
          * API
          */
-        Route::group(['middleware' => ['api']], function () {
+        Route::group(['middleware' => ['api', 'nodebugbar']], function () {
             Route::get('/api/events/', 'Api\Events\EventsController@index');
             Route::get('/api/events/upcoming', 'Api\Events\EventsController@showUpcoming');
             Route::get('/api/events/{event}', 'Api\Events\EventsController@show');
@@ -113,7 +115,7 @@ Route::group(['middleware' => ['installed']], function () {
 
             Route::get('/login/steam', 'Auth\SteamController@login');
 
-            Route::post('/login/standard', 'Auth\LoginController@login');
+            Route::post('/login/standard', 'Auth\LoginController@login')->name('login.standard');;
 
             Route::group(['middleware' => ['auth', 'banned', 'verified', 'nophonenumber']], function () {
                 Route::get('/account', 'AccountController@index');
@@ -160,6 +162,9 @@ Route::group(['middleware' => ['installed']], function () {
              * Events
              */
             Route::get('/events', 'Events\EventsController@index');
+            Route::group(['middleware' => ['auth', 'banned', 'verified', 'nophonenumber']], function() {
+                Route::get('/events/participants/{participant}/{fileType}', 'Events\ParticipantsController@exportParticipantAsFile');
+            });
             Route::get('/events/{event}', 'Events\EventsController@show');
             Route::get('/events/{event}/big', 'HomeController@bigScreen');
 
@@ -410,6 +415,12 @@ Route::group(['middleware' => ['installed']], function () {
 
 
             /**
+             * GameTemplates
+             */
+            Route::get('/admin/games/gametemplates', 'Admin\GameTemplatesController@index');
+            Route::post('/admin/games/gametemplates', 'Admin\GameTemplatesController@deploy');
+
+            /**
              * Games
              */
             Route::get('/admin/games', 'Admin\GamesController@index');
@@ -448,6 +459,7 @@ Route::group(['middleware' => ['installed']], function () {
             Route::delete('/admin/games/{game}/gameservercommandparameters/{gameServerCommandParameter}', 'Admin\GameServerCommandParametersController@destroy');
 
 
+
             /**
              * MatchReplays
              */
@@ -469,6 +481,16 @@ Route::group(['middleware' => ['installed']], function () {
                 '/admin/events/{event}/participants/{participant}/transfer',
                 'Admin\Events\ParticipantsController@transfer'
             );
+            Route::post(
+                '/admin/events/{event}/participants/{participant}/revoke',
+                'Admin\Events\ParticipantsController@revoke'
+            );
+            if (config('admin.super_danger_zone')) {
+                Route::delete(
+                    '/admin/events/{event}/participants/{participant}',
+                    'Admin\Events\ParticipantsController@delete'
+                );
+            }
 
             /**
              * Announcements
@@ -629,6 +651,7 @@ Route::group(['middleware' => ['installed']], function () {
             Route::post('/admin/settings/appearance/slider/images/{image}', 'Admin\AppearanceController@sliderUpdate');
             Route::delete('/admin/settings/appearance/slider/images/{image}', 'Admin\AppearanceController@sliderDelete');
             Route::get('/admin/settings/appearance/css/recompile', 'Admin\AppearanceController@cssRecompile');
+            Route::get('/admin/settings/appearance/css/updatedatabasefromfile', 'Admin\AppearanceController@cssUpdateDatabaseFromFile');
             Route::post('/admin/settings/appearance/css/override', 'Admin\AppearanceController@cssOverride');
             Route::post('/admin/settings/appearance/css/variables', 'Admin\AppearanceController@cssVariables');
 
@@ -666,8 +689,12 @@ Route::group(['middleware' => ['installed']], function () {
             Route::get('/admin/purchases', 'Admin\PurchasesController@index');
             Route::get('/admin/purchases/shop', 'Admin\PurchasesController@showShop');
             Route::get('/admin/purchases/event', 'Admin\PurchasesController@showEvent');
+            Route::get('/admin/purchases/revoked', 'Admin\PurchasesController@showRevoked');
             Route::get('/admin/purchases/{purchase}/setSuccess', 'Admin\PurchasesController@setSuccess');
             Route::get('/admin/purchases/{purchase}', 'Admin\PurchasesController@show');
+            if (config('admin.super_danger_zone')) {
+                Route::delete('/admin/purchases/{purchase}', 'Admin\PurchasesController@delete');
+            }
 
             /**
              * Credit System

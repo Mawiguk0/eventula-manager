@@ -20,10 +20,26 @@ return [
     /* Ticket Partial*/
     'has_been_gifted' => 'This Ticket has been gifted!',
     'not_eligable_for_seat' => 'This Ticket is not eligable for a seat',
+    'has_been_revoked' => 'This ticket has been revoked!',
     'gift_ticket' => 'Gift Ticket', 
     'gift_url' => 'Gift URL:',
     'revoke_gift' => 'Revoke Gift',
     'staff_ticket' => 'Staff Ticket',
-    'free_ticket' => 'Free Ticket,'
+    'free_ticket' => 'Free Ticket',
 
+    /* Ticket PDF */
+    'pdf_header' => 'Your ticket for :name',
+    'ticket_name' => 'Ticket name',
+    'seat' => 'Seat',
+    'seat_in' => 'Seated in',
+    'username' => 'Username',
+    'realname' => 'Name',
+    'realname_format' => ':firstname :lastname',
+    'present_qr_code' => 'Please present this QR code at the entry gate.',
+    'generated_at' => 'This document has been created on :date at :time',
+
+    /* Ticket PDF views */
+    'not_allowed' => 'You are not allowed to view this ticket',
+    'wrong_file_format' => 'Unsupported file type',
+    'download_pdf' => 'Download PDF',
 ];
