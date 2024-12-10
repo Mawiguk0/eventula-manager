@@ -27,20 +27,20 @@ class UsersController extends Controller
      */
     public function index(Request $request)
     {
-        if ($request->searchquery != "")
-        {
+        if ($request->searchquery != "") {
             return view('admin.users.index')
-            ->withUser(Auth::user())
-            ->withUsers(User::where('username', 'LIKE', '%'.$request->searchquery.'%')
-                ->orWhere('firstname', 'LIKE', '%'.$request->searchquery.'%')
-                ->orWhere('surname', 'LIKE', '%'.$request->searchquery.'%')
-                ->orWhere('username_nice', 'LIKE', '%'.$request->searchquery.'%')
-                ->orWhere('steamname', 'LIKE', '%'.$request->searchquery.'%')
-                ->orWhere('email', 'LIKE', '%'.$request->searchquery.'%')
-                ->orWhere('phonenumber', 'LIKE', '%'.$request->searchquery.'%')
-                ->paginate(20)->appends(['searchquery' =>  $request->searchquery])
-        
-        );            
+                ->withUser(Auth::user())
+                ->withUsers(
+                    User::where('username', 'LIKE', '%' . $request->searchquery . '%')
+                        ->orWhere('firstname', 'LIKE', '%' . $request->searchquery . '%')
+                        ->orWhere('surname', 'LIKE', '%' . $request->searchquery . '%')
+                        ->orWhere('username_nice', 'LIKE', '%' . $request->searchquery . '%')
+                        ->orWhere('steamname', 'LIKE', '%' . $request->searchquery . '%')
+                        ->orWhere('email', 'LIKE', '%' . $request->searchquery . '%')
+                        ->orWhere('phonenumber', 'LIKE', '%' . $request->searchquery . '%')
+                        ->paginate(20)->appends(['searchquery' =>  $request->searchquery])
+
+                );
         }
 
         return view('admin.users.index')
@@ -154,7 +154,10 @@ class UsersController extends Controller
             case 'steam':
                 $user->steamname = null;
                 $user->steamid = null;
-                $user->avatar = null;
+                $user->steam_avatar = null;
+                if ($user->selected_avatar == 'steam') {
+                    $user->selected_avatar = 'local';
+                }
                 break;
             default:
                 Session::flash('alert-danger', 'Cannot remove thirdparty authentication, no method selected!!');

@@ -58,6 +58,7 @@ return [
     'purchasetickets' => 'Purchase tickets',
     'soldout' => 'Sold out!',
     'limitedavailability' => 'Limited availablity',
+    'ticketgroup' => 'Ticket group: :ticketgroup',
     'availablefrom' => 'This ticket will be available for purchase at :time on :date',
     'ticketnolongavailable' => 'This ticket is no longer available for purchase',
     'seatsremaining' => 'Seats remaining',
@@ -117,6 +118,13 @@ return [
     'tournament_cannot_remove' => 'Cannot remove. Please try again.',
     'tournament_sucessfully_removed' => 'You have been successfully removed from the Tournament.',
     'tournament_cannot_join_thirdparty' => 'you cannot sign up for this tournament because the nessecary third party account link on your user is missing. Please check your signle sign-on settings in your profile.',
+    'tournament_staff_not_permitted' => 'Tournament participation of staff members is not allowed at this event.',
+    'tournament_freebie_not_permitted' => 'Tournament participation of freebies is not allowed at this event.',
     /* Ticket Partial*/
     'remove_seating' => 'Remove Seating',
+
+    /* General */
+    'time_delimiter' => 'at',
+    'time_suffix' => '',
+    'savetocalendar' => 'Save to Calendar'
 ];

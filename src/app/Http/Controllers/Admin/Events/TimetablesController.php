@@ -29,12 +29,6 @@ class TimetablesController extends Controller
      */
     public function index(Event $event)
     {
-        foreach ($event->timetables as $timetable) {
-            $timetable->data = EventTimetableData::where('event_timetable_id', $timetable->id)
-                ->orderBy('start_time', 'asc')
-                ->get();
-        }
-
         return view('admin.events.timetables.index')
             ->withEvent($event);
     }

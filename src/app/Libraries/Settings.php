@@ -1043,4 +1043,35 @@ class Settings
     {
         return \App\Setting::disableAuthAllowEmailChange();
     }
+
+
+
+    /**
+     * Is user_locale Enabled
+     * @return Boolean
+     */
+    public static function isUserLocaleEnabled()
+    {
+        return \App\Setting::isUserLocaleEnabled();
+    }
+
+    /**
+     * Enable user_locale
+     * @return Boolean
+     */
+    public static function enableUserLocale()
+    {
+        return \App\Setting::enableUserLocale();
+    }
+
+    /**
+     * Disable user_locale
+     * @return Boolean
+     */
+    public static function disableUserLocale()
+    {
+        return \App\Setting::disableUserLocale();
+    }
+
+
 }

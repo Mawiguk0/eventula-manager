@@ -27,6 +27,7 @@ return [
     'credit_item' => 'Item',
     'credit_reason' => 'Reason',
     'credit_timestamp' => 'Timestamp',
+    'credit' => 'Credit',
     'tickets' => 'Tickets',
     'no_tickets' => 'You currently have no tickets.',
     'purchases' => 'Purchases',
@@ -92,4 +93,10 @@ return [
     'new_token_wizzard_del_failed' => 'Deletion of the old token failed. Please try again.',
     'new_token_wizzard_creation_failed' => 'Creation of the token failed. Please try again.',
     'new_token_wizzard_clickoncallback' => 'You can now click on the connect back button or you can copy the token manually to your application.',
+    'locale' => 'Language',
+    'avatarsettings' => 'Avatar Settings',
+    'avatardescription' => 'You can use your Steam Avatar or upload a custom one.',
+    'avatarsteam' => 'Use Steam Avatar',
+    'avatarlocal' => 'Upload a Custom Avatar',
+
 ];

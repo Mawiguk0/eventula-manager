@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers\Auth;
 
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Cookie;
+
 use Session;
 use Settings;
 
@@ -71,8 +74,9 @@ class LoginController extends Controller
                 return Redirect::back()->withError('You have been banned.');
             }
         }
-        if ($this->attemptLogin($request)) {
 
+
+        if ($this->attemptLogin($request)) {
             if ((!isset($user->phonenumber) || $user->phonenumber == null) &&  Settings::isAuthRequirePhonenumberEnabled()) {
                 return redirect('/account/email'); // redirect to site
             }

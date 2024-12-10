@@ -136,13 +136,23 @@
 					{{ Form::open(array('url'=>'/admin/events/' . $event->slug . '/participants/' . $participant->id . '/signin')) }}
 						<div class="mb-3">
 							<button type="submit" class="btn btn-success btn-block">Sign in</button>
-						</div>
 					{{ Form::close() }}
 					<hr>
 					<div class="mb-3">
 						<button type="submit" class="btn btn-danger btn-block" disabled>Refund - <small>Coming soon</small></button>
 					</div>
+				@else
+				<hr>
+				@if (!$participant->revoked)
+				<div class="form-group">
+					<a href="/admin/events/{{ $event->slug }}/participants/{{ $participant->id}}/signout/">
+						<button type="submit" class="btn btn-danger btn-block">Sign Out </button>
+					</a>	
+				</div>
 				@endif
+						</hr>
+				@endif
+				
 				@if ((!$participant->signed_in) && ($participant->ticket) && ($participant->purchase->status != "Success"))
 				<div class="mb-3">
 					complete payment to transfer or sign in the user

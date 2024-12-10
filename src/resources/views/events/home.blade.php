@@ -44,21 +44,7 @@ use Debugbar;
 	@endif
 
 	<!-- EVENT SPONSORS -->
-	@if (!$event->sponsors->isEmpty())
-		<div class="pb-2 mt-4 mb-4 border-bottom">
-			<a name="sponsors"></a>
-			<h3>@lang('events.eventsponsoredby', ['event' => $event->display_name])</h3>
-		</div>
-		@foreach ($event->sponsors as $sponsor)
-			<a href="{{$sponsor->website}}">
-				<picture>
-					<source srcset="{{ $sponsor->image_path }}.webp" type="image/webp">
-					<source srcset="{{ $sponsor->image_path }}" type="image/jpeg">
-					<img alt="{{ $sponsor->website}}" class="img-fluid rounded" src="{{ $sponsor->image_path }}"/>
-				</picture>
-			</a>
-		@endforeach
-	@endif
+	@include ('layouts._partials._sponsors.index')
 
 	<!-- ESSENTIAL INFORMATION -->
 	<div class="row">
@@ -78,7 +64,12 @@ use Debugbar;
 			<div class="alert alert-info"><strong>@lang('events.noannouncements')</strong></div>
 			@else
 			@foreach ($event->announcements as $announcement)
-			<div class="alert alert-info">{{ $announcement->message }}</div>
+    		<div class="alert alert-info" style="position: relative; padding-right: 150px;">
+	        	{{ $announcement->message }}
+       			<span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%);">
+    	        	{{ $announcement->created_at->format('M d, h:i') }}
+        		</span>
+    		</div>
 			@endforeach
 			@endif
 		</div>
@@ -327,17 +318,17 @@ use Debugbar;
 		<div class="col-12 col-sm-6 col-md-3">
 			<a href="/events/{{ $event->slug }}/tournaments/{{ $tournament->slug }}" class="link-unstyled">
 				<div class="card card-hover mb-3">
-					<div class="card-header ">
-						@if ($tournament->game && $tournament->game->image_thumbnail_path)
-						<picture>
-							<source srcset="{{ $tournament->game->image_thumbnail_path }}.webp" type="image/webp">
-							<source srcset="{{ $tournament->game->image_thumbnail_path }}" type="image/jpeg">
-							<img class="img img-fluid rounded" src="{{ $tournament->game->image_thumbnail_path }}" alt="{{ $tournament->game->name }}">
-						</picture>
-						@endif
-						<h3 class="text-primary">{{ $tournament->name }}</h3>
-					</div>
+					@if ($tournament->game && $tournament->game->image_thumbnail_path)
+					<picture>
+						<source srcset="{{ $tournament->game->image_thumbnail_path }}.webp" type="image/webp">
+						<source srcset="{{ $tournament->game->image_thumbnail_path }}" type="image/jpeg">
+						<img class="img img-fluid rounded" src="{{ $tournament->game->image_thumbnail_path }}" alt="{{ $tournament->game->name }}" class="card-img-top img-fluid">
+					</picture>
+					@endif
 					<div class="card-body">
+						<div class="card-title">
+						<h2 class="text-primary">{{ $tournament->name }}</h2>
+						</div>
 						<div class="thumbnail">
 							<div class="caption">
 								<span class="small">
@@ -443,6 +434,28 @@ use Debugbar;
 								</strong>
 							</div>
 						</div>
+						
+					</div>
+					<div class="card-footer">
+						@if ($tournament->status == 'COMPLETE')
+						<span class="badge badge-success">@lang('events.ended')</span>
+						@endif
+						@if ($tournament->status == 'LIVE')
+						<span class="badge badge-success">@lang('events.live')</span>
+						@endif
+						@if ($tournament->status != 'COMPLETE' && $user && $user->active_event_participant && !$tournament->getParticipant($user->active_event_participant->id))
+						<span class="badge badge-danger">@lang('events.notsignedup')</span>
+						@endif
+						@if ($tournament->status != 'COMPLETE' && $user && $user->active_event_participant && $tournament->getParticipant($user->active_event_participant->id))
+						<span class="badge badge-success">@lang('events.signedup')</span>
+						@endif
+						@if ($tournament->status != 'COMPLETE' && $user && !$user->active_event_participant && $user->getAllTickets($event->id)->isEmpty())
+						<span class="badge badge-info">@lang('events.purchaseticketosignup')</span>
+						@else
+						@if ($tournament->status != 'COMPLETE' && $user && !$user->active_event_participant && !$event->online_event)
+						<span class="badge badge-info">@lang('events.signuponlywhenlive')</span>
+						@endif
+						@endif
 					</div>
 				</div>
 			</a>
@@ -698,6 +711,7 @@ use Debugbar;
 	</table>
 
 		<!-- SEATING -->
+		<!-- partial Layout (layouts._partials._events.seating) needs changes from master -->
 		@if (!$event->online_event &&
 		!$event->seatingPlans->isEmpty() &&
 		(

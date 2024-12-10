@@ -27,6 +27,7 @@ return [
     'credit_item' => 'Artikel',
     'credit_reason' => 'Grund',
     'credit_timestamp' => 'Zeitpunkt',
+    'credit' => 'Credit',
     'tickets' => 'Tickets',
     'no_tickets' => 'Du hast im Moment keine Tickets.',
     'purchases' => 'Käufe',
@@ -92,4 +93,9 @@ return [
     'new_token_wizzard_del_failed' => 'Das Löschen des alten Tokens ist fehlgeschlagen. Bitte versuche es noch einmal.',
     'new_token_wizzard_creation_failed' => 'Das Erstellen des Tokens ist fehlgeschlagen. Bitte versuche es noch einmal.',
     'new_token_wizzard_clickoncallback' => 'Du kannst auf Zurück verbinden klicken oder den Token manuell kopieren.',
+    'locale' => 'Sprache',
+    'avatarsettings' => 'Avatar Einstellungen',
+    'avatardescription' => 'Du kannst deinen Steam Avatar verwenden (wenn dein Steam Account gekoppelt ist) oder einen eigenen Avatar hochladen',
+    'avatarsteam' => 'Benutze Steam Avatar',
+    'avatarlocal' => 'Benutze Eigenen Avatar',
 ];

@@ -144,7 +144,16 @@
 									</label>
 							</div>
 						</div>
-
+						<div class="form-check">
+								<label class="form-check-label">
+									{{ Form::checkbox('tournaments_staff', null, false, array('id'=>'tournaments_staff')) }} Allow Tournaments for Staff (Allow Staff to sign into Tournaments)
+								</label>
+						</div>
+						<div class="form-check">
+								<label class="form-check-label">
+									{{ Form::checkbox('tournaments_freebie', null, false, array('id'=>'tournaments_freebies')) }} Allow Tournaments for Freebies (Allow Freebies to sign into Tournaments)
+								</label>
+						</div>
 						@if ($eventTags)
 							<div class="mb-3">
 								<label>Eventula Tags</label>

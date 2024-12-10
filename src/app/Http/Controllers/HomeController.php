@@ -23,6 +23,8 @@ use App\MatchMakingTeam;
 
 use App\Http\Requests;
 
+use Carbon\Carbon;
+
 use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\Redirect;
@@ -43,90 +45,38 @@ class HomeController extends Controller
      */
     public function index()
     {
-
-        // Check for Event
         $user = Auth::user();
-        if ($user && !empty($user->eventParticipants)) {
-            foreach ($user->eventParticipants as $participant) {
-                Debugbar::addMessage("Participant: " . json_encode($participant), 'Event');
-                if ((date('Y-m-d H:i:s') >= $participant->event->start) &&
-                    (date('Y-m-d H:i:s') <= $participant->event->end) &&
-                    ($participant->signed_in || $participant->event->online_event) &&
-                    ($participant->free || $participant->staff || $participant->purchase->status == "Success"))
-                {
-                    Debugbar::addMessage("Participant gets event", 'Event');
+        // redirect to home page if no event participants are available
+        if (!$user || empty($user->eventParticipants)) {
+            return $this->home();
+        }
 
-                    return $this->event();
-                }
+        // Loop trough the eventParticipants 
+        // The first one, whos event is currently running and that is active redirects to the event page
+        foreach ($user->eventParticipants as $participant) {
+            if ($participant->event->isRunningCurrently() && $participant->isActive()) {
+                return $this->event();
             }
         }
-        return $this->net();
+
+        // redirect to home page by default
+        return $this->home();
     }
 
+
+
     /**
-     * Show New Page
+     * Show Home Page
      * @return View
      */
-    public function net()
+    public function home()
     {
-        $topAttendees = array();
-        foreach (EventParticipant::groupBy('user_id', 'event_id')->get() as $attendee) {
-            if ($attendee->event && $attendee->event->status == 'PUBLISHED' && $attendee->event->end < \Carbon\Carbon::today()) {
-                $recent = false;
-                if (!$attendee->user->admin && array_key_exists($attendee->user->id, $topAttendees)) {
-                    $topAttendees[$attendee->user->id]->event_count++;
-                    $recent = true;
-                }
-                if (!$attendee->user->admin && !$recent) {
-                    $attendee->user->event_count = 1;
-                    $topAttendees[$attendee->user->id] = $attendee->user;
-                }
-            }
-        }
-        usort($topAttendees, function ($a, $b) {
-            return $b['event_count'] <=> $a['event_count'];
-        });
-
-        $topWinners = array();
-        foreach (EventTournamentTeam::where('final_rank', 1)->get() as $winner_team) {
-            $recent = false;
-            foreach ($winner_team->tournamentParticipants as $winner) {
-                if (array_key_exists($winner->eventParticipant->user->id, $topWinners)) {
-                    $topWinners[$winner->eventParticipant->user->id]->win_count++;
-                    $recent = true;
-                }
-                if (!$recent) {
-                    $winner->eventParticipant->user->win_count = 1;
-                    $topWinners[$winner->eventParticipant->user->id] = $winner->eventParticipant->user;
-                }
-            }
-        }
-        foreach (EventTournamentParticipant::where('final_rank', 1)->get() as $winner) {
-            $recent = false;
-            if (array_key_exists($winner->eventParticipant->user->id, $topWinners)) {
-                $topWinners[$winner->eventParticipant->user->id]->win_count++;
-                $recent = true;
-            }
-            if (!$recent) {
-                $winner->eventParticipant->user->win_count = 1;
-                $topWinners[$winner->eventParticipant->user->id] = $winner->eventParticipant->user;
-            }
-        }
-        usort($topWinners, function ($a, $b) {
-            return $b['win_count'] <=> $a['win_count'];
-        });
-
-        $gameServerList = Helpers::getPublicGameServers();
-
         return view("home")
-            ->withNextEvent(
-                Event::where('end', '>=', \Carbon\Carbon::now())
-                    ->orderBy(DB::raw('ABS(DATEDIFF(events.end, NOW()))'))->first()
-            )
-            ->withTopAttendees(array_slice($topAttendees, 0, 5))
-            ->withTopWinners(array_slice($topWinners, 0, 5))
-            ->withGameServerList($gameServerList)
-            ->withNewsArticles(NewsArticle::limit(2)->orderBy('created_at', 'desc')->get())
+            ->withNextEvent(Event::nextUpcoming()->first())
+            ->withTopAttendees(Helpers::getTopAttendees())
+            ->withTopWinners(Helpers::getTopWinners())
+            ->withGameServerList(Helpers::getPublicGameServers())
+            ->withNewsArticles(NewsArticle::latestArticles()->get())
             ->withEvents(Event::all())
             ->withSliderImages(SliderImage::getImages('frontpage'))
         ;
@@ -176,15 +126,18 @@ class HomeController extends Controller
     {
         $signedIn = true;
         $gameServerList = Helpers::getCasualGameServers();
-        $event = Event::where('start', '<', date("Y-m-d H:i:s"))->where('end', '>', date("Y-m-d H:i:s"))->orderBy('id', 'desc')->first();
 
-        $event->load('eventParticipants.user');
-        $event->load('timetables');
-        foreach ($event->timetables as $timetable) {
-            $timetable->data = EventTimetableData::where('event_timetable_id', $timetable->id)
-                ->orderBy('start_time', 'asc')
-                ->get();
+        $event =  Event::current()->first();
+        // Check if event is null and handle it
+        if (!$event) {
+            return redirect()->route('home.index')->with('error', 'No active event found.');
         }
+
+        // Loading can be done like this in one call of load function
+        $event->load(
+            'eventParticipants.user',
+        );
+
 
         // TODO - Refactor
         $user = Auth::user();
@@ -207,7 +160,6 @@ class HomeController extends Controller
 
         $currentuser                  = Auth::id();
         $openpublicmatches = MatchMaking::where(['ispublic' => 1, 'status' => 'OPEN'])->orderByDesc('created_at')->paginate(4, ['*'], 'openpubmatches');
-        // $liveclosedpublicmatches = MatchMaking::where(['ispublic' => 1, 'status' => 'WAITFORPLAYERS'])->orWhere(['ispublic' => 1, 'status' => 'LIVE'])->orWhere(['ispublic' => 1, 'status' => 'COMPLETE'])->orderByDesc('created_at')->paginate(4, ['*'], 'closedpubmatches');
         $liveclosedpublicmatches = MatchMaking::where(function ($query) {
             $query->where('ispublic', 1);
             $query->where('status', 'WAITFORPLAYERS');
@@ -218,15 +170,13 @@ class HomeController extends Controller
             $query->where('ispublic', 1);
             $query->where('status', 'COMPLETE');
         })->orderByDesc('created_at')->paginate(4, ['*'], 'closedpubmatches');;
-        
+
         $ownedmatches = MatchMaking::where(['owner_id' => $currentuser])->orderByDesc('created_at')->paginate(4, ['*'], 'owenedpage')->fragment('ownedmatches');
         $memberedteams = Auth::user()->matchMakingTeams()->orderByDesc('created_at')->paginate(4, ['*'], 'memberedmatches')->fragment('memberedmatches');
         $currentuseropenlivependingdraftmatches = array();
-        
-        foreach (MatchMaking::where(['status' => 'OPEN'])->orWhere(['status' => 'LIVE'])->orWhere(['status' => 'DRAFT'])->orWhere(['status' => 'PENDING'])->get() as $match)
-        {
-            if ($match->getMatchTeamPlayer(Auth::id()))
-            {
+
+        foreach (MatchMaking::where(['status' => 'OPEN'])->orWhere(['status' => 'LIVE'])->orWhere(['status' => 'DRAFT'])->orWhere(['status' => 'PENDING'])->get() as $match) {
+            if ($match->getMatchTeamPlayer(Auth::id())) {
                 $currentuseropenlivependingdraftmatches[$match->id] = $match->id;
             }
         }

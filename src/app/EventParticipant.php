@@ -39,6 +39,8 @@ class EventParticipant extends Model
         'event_id',
         'ticket_id',
         'purchase_id',
+        'staff',
+        'free',
     ];
 
     public static function boot()
@@ -137,18 +139,15 @@ class EventParticipant extends Model
      */
     public function generateQRCode($forcenewname = false)
     {
-        if(Str::startsWith(config('app.url'), ['http://', 'https://'])) {
+        if (Str::startsWith(config('app.url'), ['http://', 'https://'])) {
             $ticketUrl = config('app.url') . '/tickets/retrieve/' . $this->id;
         } else {
             $ticketUrl = 'https://' . config('app.url') . '/tickets/retrieve/' . $this->id;
         }
 
-        if (isset($this->qrcode) && $this->qrcode != "" && !$forcenewname)
-        {
+        if (isset($this->qrcode) && $this->qrcode != "" && !$forcenewname) {
             $qrCodeFullPath = $this->qrcode;
-        }
-        else
-        {
+        } else {
             $qrCodePath = 'storage/images/events/' . $this->event->slug . '/qr/';
             $qrCodeFileName =  $this->event->slug . '-' . Str::random(32) . '.png';
             if (!file_exists($qrCodePath)) {
@@ -203,7 +202,8 @@ class EventParticipant extends Model
         return $particpants;
     }
 
-    public function getPdf(): string {
+    public function getPdf(): string
+    {
         $user = Auth::user();
         $data = new \stdClass();
         // TODO: Probably don't use str_replace
@@ -253,10 +253,22 @@ class EventParticipant extends Model
         if (!$this->seat) {
             return $this->save();
         }
-        if (!$this->seat->delete()) {
+        if (!$this->seat->delete() || !$this->setSignIn(false)) {
             $this->revoked = false;
             return false;
         }
         return $this->save();
+    }
+
+    /**
+     * Check if participant is active
+     * @return Boolean
+     */
+    public function isActive()
+    {
+
+        return ($this->signed_in || $this->event->online_event) &&
+            ($this->free || $this->staff || $this->purchase->status == "Success") &&
+            (!$this->revoked);
     }
 }

@@ -6,6 +6,9 @@
 			"bg-danger-light" => $participant->revoked,
 			"text-danger" => $participant->revoked
         ])>
+		<strong>
+		{{ $participant->event->display_name }}
+		</strong>
 		@if ($participant->ticket)
 		<strong>{{ $participant->ticket->name }} 
 			@if ($participant->ticket && $participant->ticket->seatable) - @lang('events.seat'): 

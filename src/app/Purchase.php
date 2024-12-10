@@ -68,6 +68,9 @@ class Purchase extends Model
                 break;
             case 'free':
                 return 'free';
+                break;           
+            case 'system':
+                return 'System (Free)';
                 break;            
             case 'onsite':
                 return 'onsite';

@@ -1,3 +1,7 @@
+-Added Change for Events Venue after creating
+-Added iCal for Events Information
+-Added Tournament Participation Control for Staff and Freebie Event Participants
+-Added Partials for Event Information, Event Information Card, Sponsors, Seating
 -Added Multilanguage support on a per site bases
 -Added Translation to german
 -Added Gameserver Management per game (includes a management/Rcon feature and a api for the CS:go tournament plugin Get5)
