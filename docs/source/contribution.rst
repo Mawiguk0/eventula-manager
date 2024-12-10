@@ -188,7 +188,7 @@ Some things you should think of before starting out implementing new features:
 To start a new code contribution please:
 
 - open an issue to announce that you are working on a feature/change to get thoughts from the other developers and to prevent incompatibillities
-- make your fork PugSharp (if you are not already a acknowledged developer who can create branches on our repository)
+- make your fork of eventula (if you are not already a acknowledged developer who can create branches on our repository)
 - make a new branch based on ``dev`` with the Name ``feature/examplefeature`` 
 - as soon as you have code, please open a draft pull request against the ``dev`` branch. 
 

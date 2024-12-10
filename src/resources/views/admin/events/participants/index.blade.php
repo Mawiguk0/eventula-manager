@@ -37,7 +37,7 @@
 			</div>
 			<div class="card-body">
 				<div class="dataTable_wrapper">
-					<table width="100%" class="table table-striped table-hover" id="seating_table">
+					<table width="100%" class="table table-striped table-hover participants-table" id="seating_table">
 						<thead>
 							<tr>
 								<th>User</th>
@@ -53,7 +53,7 @@
 						</thead>
 						<tbody>
 							@foreach ($participants as $participant)
-							<tr class="odd gradeX">
+							<tr @class(["odd", "gradeX", "table-danger revoked" => $participant->revoked])>
 								<td>
 									{{ $participant->user->username }}
 									@if ($participant->user->steamid)
@@ -96,6 +96,21 @@
 									<a href="/admin/events/{{ $event->slug }}/participants/{{ $participant->id }}">
 										<button type="button" class="btn btn-primary btn-sm btn-block">Edit</button>
 									</a>
+								</td>
+								<td>
+									@if (!$participant->revoked)
+										@if(!$participant->signed_in)
+										{{ Form::open(array('url'=>'/admin/events/' . $event->slug . '/participants/' . $participant->id . '/signin')) }}
+										<a href="/admin/events/{{ $event->slug }}/participants/{{ $participant->id}}/signin">
+											<button type="submit" class="btn btn-success btn-sm float-right mr-3 ml-3 btn-block">Sign In </button>
+										</a>
+										{{ Form::close() }}
+										@else
+										<a href="/admin/events/{{ $event->slug }}/participants/{{ $participant->id}}/signout/">
+											<button type="submit" class="btn btn-danger btn-sm float-right mr-3 ml-3 btn-block">Sign Out </button>
+										</a>
+										@endif
+									@endif
 								</td>
 							</tr>
 							@endforeach

@@ -379,6 +379,14 @@ class SettingsTableSeeder extends Seeder
             ]
         );
         Setting::firstOrCreate(
+            ['setting'          => 'user_locale_enabled'],
+            [
+                'value'         => true,
+                'default'       => true,
+                'description'   => 'Enable Users to set different locale in their profile settings'
+            ]
+        );
+        Setting::firstOrCreate(
             ['setting'          => 'systems_matchmaking_publicuse'],
             [
                 'value'         => true,

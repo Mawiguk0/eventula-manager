@@ -105,7 +105,7 @@ class Setting extends Model
             Storage::putFileAs(
                 'public/images/main',
                 $logo,
-                'logo_main' . mt_rand(10, 9999) . '.png'
+                'logo_main' . mt_rand(10, 9999) . '.' . $logo->extension()
             )
         );
         $setting = self::where('setting', 'org_logo')->first();
@@ -475,6 +475,9 @@ class Setting extends Model
             case 'EUR':
                 $symbol = '€';
                 break;
+            case 'SEK':
+		$symbol = 'kr.';
+		break;
             case 'DKK':
                 $symbol = 'kr.';
                 break;
@@ -1490,4 +1493,49 @@ class Setting extends Model
     {
         return self::where('setting', 'site_locale')->first()->value;
     }
+
+
+    /**
+     * Is user_locale Enabled
+     * @return Boolean
+     */
+    public static function isUserLocaleEnabled()
+    {
+        return self::where('setting', 'user_locale_enabled')->first()->value;
+    }
+
+    /**
+     * Enable user_locale
+     * @return Boolean
+     */
+    public static function enableUserLocale()
+    {
+        if (!$UserLocaleEnabled = self::where('setting', 'user_locale_enabled')->first()) {
+            return false;
+        }
+        $UserLocaleEnabled->value = true;
+        if (!$UserLocaleEnabled->save()) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Disable user_locale
+     * @return Boolean
+     */
+    public static function disableUserLocale()
+    {
+        if (!$UserLocaleEnabled = self::where('setting', 'user_locale_enabled')->first()) {
+            return false;
+        }
+        $UserLocaleEnabled->value = false;
+        if (!$UserLocaleEnabled->save()) {
+            return false;
+        }
+        return true;
+    }
+
+
+
 }

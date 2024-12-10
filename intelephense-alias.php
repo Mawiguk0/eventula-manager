@@ -135,7 +135,7 @@ class Helpers extends App\Libraries\Helpers
 class FacebookPageWrapper extends App\Libraries\Facebook\FacebookPageWrapper
 {
 }
-class Image extends Intervention\Image\Facades\Image
+class Image extends Intervention\Image\Laravel\Facades\Image
 {
 }
 class SEOMeta extends Artesaos\SEOTools\Facades\SEOMeta

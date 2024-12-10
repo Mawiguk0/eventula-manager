@@ -81,6 +81,13 @@ class ParticipantsController extends Controller
      */
     public function signIn(EventParticipant $participant)
     {
+        if ($participant->revoked) {
+            return [
+                'successful' => false,
+                'reason' => 'Cannot sign in revoked Participant',
+                'participant' => $participant,
+            ];
+        }
         if (!$participant->setSignIn()) {
             return [
                 'successful' => false,

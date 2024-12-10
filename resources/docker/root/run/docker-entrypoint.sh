@@ -22,6 +22,12 @@ file_env() {
 	unset "$fileVar"
 }
 
+if [ "$DISABLE_LEGACY_WARNING" = 'true' ];
+then
+	echo 'THIS VERSION OF EVENTULA IS DEPRECATED SOON, WHICH INCLUDES SECURITY UPDATES! YOU HAVE SURPRESSED THE WARNING ON THE PAGE THAT NOTIFIES ALL ADMINS ABOUT THIS FACT !!! PLEASE UPDATE OR FORK EVENTULA LEGACY ! '
+fi
+
+
 # Check Variables Exist & Translate from file
 # Required Env Variables
 echo 'Required Env Variable Check:'
@@ -386,6 +392,9 @@ echo "set folder permissions..."
 find $NGINX_DOCUMENT_ROOT -type d ! -perm 0775 -not -path "$NGINX_DOCUMENT_ROOT/node_modules/*" -print0 | xargs -0 -r chmod 775
 echo "set storage and cache permissions..."
 chmod -R ug+rwx $NGINX_DOCUMENT_ROOT/storage $NGINX_DOCUMENT_ROOT/bootstrap/cache
+echo "set nginx tmp permissions..."
+mkdir -p /var/lib/nginx/tmp/client_body
+chown -R $UUID:$GUID /var/lib/nginx/tmp
 
 # Database Wait check
 echo "---------------"

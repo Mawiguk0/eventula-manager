@@ -16,7 +16,7 @@ return [
     'login_methods' => 'Nutze eine der aufgelisteten Login Methoden um fortzufahren',
     'or' => 'oder',
     'register_now' => 'registriere dich jetzt',
-    'please_login' => 'Bitte melde dich an',
+    'please_login' => 'Bitte anmelden',
     'email_short' => 'E-Mail',
     'password' => 'Passwort',
     'remember' => 'Angemeldet bleiben',

@@ -219,7 +219,6 @@ Fill in the APP_KEY from the last step and all other empty Variables (if not opt
 
 .. code-block:: yaml
 
-    version: "3.4"
     services:
         app:
             image: lan2play/eventula-manager:latest
@@ -294,7 +293,11 @@ Fill in the APP_KEY from the last step and all other empty Variables (if not opt
 
 Run ``docker compose up -d && docker compose logs -f`` or ``docker-compose up -d && docker-compose logs -f`` depending on your docker compose version. 
 
-Give the stack a few minutes to start. In the beginning there will be errors that come from the missing database availability, you can ignore them.
+Give the stack a few minutes to start. 
+
+    .. warning::
+
+        In the beginning there will be errors that come from the missing database availability, you can ignore them all, including the ``unable to find the IP address for the container`` error from traefik. 
 
 After a few minutes your log should show ``NOTICE: ready to handle connections`` and should be reachable with ``https://$APP_URL`` in your browser.
 

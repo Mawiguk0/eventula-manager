@@ -12,7 +12,7 @@
         {{ Form::open(array('url'=>'/register/' . $loginMethod )) }}
         {{ Form::hidden('method', $loginMethod, array('id'=>'method','class'=>'form-control')) }}
         @if ($loginMethod == "steam")
-        {{ Form::hidden('avatar', $avatar, array('id'=>'avatar','class'=>'form-control')) }}
+        {{ Form::hidden('avatar', $steam_avatar, array('id'=>'avatar','class'=>'form-control')) }}
         {{ Form::hidden('steamid', $steamid, array('id'=>'steamid','class'=>'form-control')) }}
         {{ Form::hidden('steamname', $steamname, array('id'=>'steamname','class'=>'form-control')) }}
         @endif

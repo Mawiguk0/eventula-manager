@@ -16,7 +16,7 @@ return [
     'description' => 'Beskrivelse',
     /* Home */
     'eventsponsoredby' => ':event er sponsoreret af',
-    'essentialinfo' => 'Informationer',
+    'essentialinfo' => 'Vigtige Informationer',
     'announcements' => 'Meddelser',
     'noannouncements' => 'Ingen meddelelser',
     'timetable' => 'Tidsplan',
@@ -38,12 +38,12 @@ return [
     'remove' => 'Fjern',
     'plspurchaseticket' => 'Køb venligst en billet',
     'plslogintopurchaseticket' => 'Log venligst ind for at købe en billet',
-    'imageuploader' => 'Image uploader',
+    'imageuploader' => 'Billed uploader',
     'server' => 'Server',
     /* Index */
     'start' => 'Start',
     'end' => 'Slut',
-    'seatingcapacity' => 'Kapacitet',
+    'seatingcapacity' => 'Sæde Kapacitet',
     /* Show */
     'eventinfo' => 'Event information',
     'tickets' => 'Billetter',
@@ -116,4 +116,7 @@ return [
     'tournament_cannot_join_thirdparty' => 'du kan ikke tilmelde dig denne turnering, fordi det nødvendige tredjepartskontolink på din bruger mangler. Tjek venligst dine single sign-on-indstillinger i din profil.',
     /* Ticket Partial*/
     'remove_seating' => 'Fjern siddepladser',
+    'timetable-created-at' => 'Skabt klokken:',
+    'timetable-updated-at' => 'Opdateret klokken:',
+    'timetable-primary-pill' => 'Primær Tidstabel',
 ];

@@ -3,6 +3,7 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 
 class EventTicket extends Model
 {
@@ -38,4 +39,24 @@ class EventTicket extends Model
     {
         return $this->belongsTo('App\CreditLog');
     }
+
+    public function ticketGroup() {
+        return $this->belongsTo('App\EventTicketGroup', 'event_ticket_group_id');
+    }
+
+    public function hasTicketGroup():bool {
+        return !empty($this->ticketGroup);
+    }
+
+    /**
+     * Scope a query to only include ungrouped tickets.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeUngrouped(Builder $query): Builder
+    {
+        return $query->whereNull('event_ticket_group_id');
+    }
+
 }

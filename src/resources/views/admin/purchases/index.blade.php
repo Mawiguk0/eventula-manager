@@ -22,7 +22,7 @@
 			</div>
 			<div class="card-body">
 				<div class="row">
-					<div class="col-12 col-md-4">
+					<div class="col-12 col-md-3">
 						<div class="card border-secondary">
 							<a href="/admin/purchases">
 								<div class="card-footer">
@@ -33,7 +33,7 @@
 							</a>
 						</div>
 					</div>
-					<div class="col-12 col-md-4">
+					<div class="col-12 col-md-3">
 						<div class="card border-secondary">
 							<a href="/admin/purchases/shop">
 								<div class="card-footer">
@@ -44,11 +44,22 @@
 							</a>
 						</div>
 					</div>
-					<div class="col-12 col-md-4">
+					<div class="col-12 col-md-3">
 						<div class="card border-secondary">
 							<a href="/admin/purchases/event">
 								<div class="card-footer">
 									<span class="float-start">Event Purchases</span>
+									<span class="float-end"><i class="fa fa-arrow-circle-right"></i></span>
+									<div class="clearfix"></div>
+								</div>
+							</a>
+						</div>
+					</div>
+					<div class="col-12 col-md-3">
+						<div class="card border-secondary">
+							<a href="/admin/purchases/revoked">
+								<div class="card-footer">
+									<span class="float-start">Purchases with revoked Participants</span>
 									<span class="float-end"><i class="fa fa-arrow-circle-right"></i></span>
 									<div class="clearfix"></div>
 								</div>
@@ -79,6 +90,15 @@
 								}elseif($purchase->status == 'Danger') {
 									$statusColor = 'danger';
 								}
+                                $participantRevoked = false;
+                                if (!empty($purchase->participants)) {
+                                    foreach ($purchase->participants as $participant) {
+                                        if ($participant->revoked) {
+                                            $participantRevoked = true;
+                                            break;
+                                        }
+                                    }
+                                }
 							@endphp
 							<tr class="table-{{ $statusColor }} text-{{ $statusColor }}">
 								<td>{{ $purchase->id }}</td>
@@ -93,7 +113,12 @@
 									@endif
 								</td>
 								<td>@if(isset($purchase->user)) {{ $purchase->user->firstname }} {{ $purchase->user->surname }} @else User deleted @endif</td>
-								<td>{{ $purchase->status }}</td>
+								<td>
+									{{ $purchase->status }}
+									@if ($participantRevoked)
+										<span class="badge text-bg-warning">Participant(s) revoked</span>
+									@endif
+								</td>
 								<td>{{ $purchase->type }}</td>
 								<td>{{ $purchase->paypal_email }}</td>
 								<td>{{ $purchase->transaction_id }}</td>

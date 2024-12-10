@@ -39,6 +39,7 @@ class Appearance extends Model
         $scss->setImportPaths('/web/html/resources/assets/sass/');
         // required for node_moudles imports
         $scss->addImportPath('/web/html/');
+        $scss->addImportPath('/web/html/node_modules/');
         $scss->setSourceMap(Compiler::SOURCE_MAP_FILE);
         $cssTemplates = ['app', 'admin'];
         foreach ($cssTemplates as $cssTemplate) {

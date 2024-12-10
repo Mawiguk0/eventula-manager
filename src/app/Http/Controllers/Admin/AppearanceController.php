@@ -201,7 +201,7 @@ class AppearanceController extends Controller
         $uploadcount = 0;
         foreach ($files as $file) {
             $imageName  = $file->getClientOriginalName();
-            Image::make($file)->save(public_path() . $destinationPath . $imageName);
+            Image::read($file)->save(public_path() . $destinationPath . $imageName);
             $image = New SliderImage();
             $image->path = $destinationPath . $imageName;
             $image->slider_name = $request->slider;

@@ -7,6 +7,7 @@ use App\NewsTag;
 
 use Illuminate\Database\Eloquent\Model;
 use Cviebrock\EloquentSluggable\Sluggable;
+use Illuminate\Database\Eloquent\Builder;
 
 class NewsArticle extends Model
 {
@@ -27,6 +28,18 @@ class NewsArticle extends Model
     protected $hidden = array(
         'created_at',
     );
+
+     /**
+     * Scope a query to get the latest news articles.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param int $limit
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeLatestArticles(Builder $query, int $limit = 2): Builder
+    {
+        return $query->orderBy('created_at', 'desc')->limit($limit);
+    }
 
     /*
      * Relationships
@@ -103,4 +116,8 @@ class NewsArticle extends Model
     {
         return implode($separator, $this->tags->pluck('tag')->toArray());
     }
+
+
+   
+
 }

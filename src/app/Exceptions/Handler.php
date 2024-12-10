@@ -4,6 +4,7 @@ namespace App\Exceptions;
 
 use Throwable;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 
 class Handler extends ExceptionHandler
@@ -49,10 +50,17 @@ class Handler extends ExceptionHandler
     public function render($request, Throwable $exception)
     {
         if (
-            strpos($request->getRequestUri(), '/api/', 0) === 0 &&
-            $exception instanceof NotFoundHttpException
+            $request->is('api/*')
         ) {
-            return response()->json(['error' => $exception->getMessage()], 404);
+            if ($exception instanceof HttpExceptionInterface) {
+                $statuscode = $exception->getStatusCode();
+            }
+            else
+            {
+                $statuscode = 500;
+            }
+            return response()->json(['error' => $exception->getMessage()], $statuscode);
+        
         }
 
         return parent::render($request, $exception);

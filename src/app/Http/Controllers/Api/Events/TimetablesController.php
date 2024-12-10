@@ -33,7 +33,7 @@ class TimetablesController extends Controller
         }
 
         if (!$event) {
-            abort(404);
+            abort(404, "Event not found.");
         }
 
         $event = Event::where('id', $event->id)->first();
@@ -54,17 +54,16 @@ class TimetablesController extends Controller
             $event = Event::where('slug', $event)->first();
         }
         if (is_numeric($timetable)) {
-            $timetable = Event::where('id', $timetable)->first();
+            $timetable = $event->timetables()->with('data')->where('id', $timetable)->first();
+
         } else {
-            $timetable = Event::where('slug', $timetable)->first();
+            $timetable = $event->timetables()->with('data')->where('slug', $timetable)->first();
         }
 
         if (!$event || !$timetable) {
-            abort(404);
+            abort(404, "Event not found.");
         }
 
-        $event = Event::where('id', $event)->first();
-        $timetable = EventTimetable::where('id', $timetable)->first();
         return $timetable;
     }
 }

@@ -1,12 +1,17 @@
 # Initialize variables
 ifeq ($(OS),Windows_NT)
-currentDir = $(patsubst %/,%, $(subst /mnt, ,$(shell wsl wslpath -u $(strip $(dir $(realpath $(lastword $(MAKEFILE_LIST))))))))
+currentDir = $(patsubst %/,%, $(lastword $(subst /host, ,$(shell wsl wslpath -u $(strip $(dir $(realpath $(lastword $(MAKEFILE_LIST)))))))))
 userId = $(shell wsl id -u)
 groupId = $(shell wsl id -g)
 else
 currentDir = $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 userId = $(shell id -u)
 groupId = $(shell id -g)
+endif
+
+ifeq (userId,0)
+userId = 1000
+groupId = 1000
 endif
 
 user = --user $(userId):$(groupId)
@@ -20,7 +25,6 @@ else
   DOCKER_COMPOSE=docker-compose
 endif
 endif
-
 
 # Run local dev
 start-local-dev: env-file-dev docker-lan app-build-clean-dev logs
@@ -39,13 +43,12 @@ interactive:
 
 # Stop all Containers
 stop:
-	$(DOCKER_COMPOSE) -f docker-compose-dev.yml stop || true
+	$(DOCKER_COMPOSE) -f docker-compose-dev.yml stop ||: true
 
 # Build from clean
 app-build-clean: folder-structure-prd layout-images-prd app-build-dep generate-key-prd dev wait-mysql database-migrate database-seed stop
 
 # Build dev from clean
-# app-build-clean-dev: folder-structure-dev layout-images-dev app-build-dep-dev purge-cache generate-key-dev dev wait-mysql database-migrate database-seed stop
 app-build-clean-dev: folder-structure-dev layout-images-dev app-build-dep-dev purge-cache generate-key-dev dev #wait-mysql stop
 
 # Build Dependencies
@@ -65,7 +68,7 @@ docs-html:
 docker-lan:
 ifeq ($(OS),Windows_NT)
 #not tested!
-ifeq ($(shell docker network ls --filter=NAME=lan | Measure-Object –Line),1)
+ifeq ($(shell powershell -Command "docker network ls --filter NAME=lan | Measure-Object -Line | Select-Object -ExpandProperty Lines"),1)
 	docker network create lan
 endif
 else
@@ -218,6 +221,7 @@ folder-structure-prd:
 	mkdir -p /src/storage/app/public/images/venues/ && \
 	mkdir -p /src/storage/app/public/images/main/ && \
 	mkdir -p /src/storage/app/public/images/shop/ && \
+	mkdir -p /src/storage/app/public/images/avatars/ && \
 	mkdir -p /src/storage/app/public/attachments/help/"
 
 folder-structure-dev:
@@ -229,6 +233,7 @@ folder-structure-dev:
 	mkdir -p /src/storage/app/public/images/venues/ && \
 	mkdir -p /src/storage/app/public/images/main/ && \
 	mkdir -p /src/storage/app/public/images/shop/ && \
+	mkdir -p /src/storage/app/public/images/avatars/ && \
 	mkdir -p /src/storage/app/public/attachments/help/"
 
 # Create SSL Keypair for Development
@@ -261,14 +266,14 @@ composer-outdated-direct:
 	docker run --rm --name compose-maintainence-update --interactive \
     --volume $(currentDir)/src:/app \
     $(user) \
-    composer:latest composer outdated -D
+    composer:latest composer outdated -D --ignore-platform-reqs
 
 # list Composer outdated
 composer-outdated:
 	docker run --rm --name compose-maintainence-update --interactive \
     --volume $(currentDir)/src:/app \
     $(user) \
-    composer:latest composer outdated
+    composer:latest composer outdated --ignore-platform-reqs
 
 # add PHP Dependencies via Composer - usage make composer-add-dep module=module/namehere
 composer-add-dep:
@@ -290,7 +295,7 @@ npm-install:
 	-v $(currentDir)/src:/usr/src/app \
 	-w /usr/src/app \
     --user 82:82 \
-	node:20.8 /bin/bash -ci "npm install --no-audit && npm run production"
+	node:22.9 /bin/bash -ci "npm install --no-audit && npm run production"
 
 # Install PRD JS Dependencies via NPM locally
 npm-install-local:
@@ -298,7 +303,7 @@ npm-install-local:
 	-v $(currentDir)/src:/usr/src/app \
 	-w /usr/src/app \
 	$(user) \
-	node:20.8 /bin/bash -ci "npm install --no-audit && npm run production"
+	node:22.9 /bin/bash -ci "npm install --no-audit && npm run production"
 
 # Install JS Dependencies via NPM
 npm-install-gh:
@@ -306,7 +311,7 @@ npm-install-gh:
 	-v $(currentDir)/src:/usr/src/app \
 	-w /usr/src/app \
     --user 0 \
-	node:20.8 /bin/bash -ci "npm install --no-audit && npm run production && chown -R $(userId):$(groupId) /usr/src/app"
+	node:22.9 /bin/bash -ci "npm install --no-audit && npm run production && chown -R $(userId):$(groupId) /usr/src/app"
 
 # Install Dev JS Dependencies via NPM
 npm-install-dev:
@@ -314,7 +319,7 @@ npm-install-dev:
 	-v $(currentDir)/src:/usr/src/app \
 	-w /usr/src/app \
 	$(user) \
-	node:20.8 /bin/bash -ci "npm install --no-audit && npm run dev"
+	node:22.9 /bin/bash -ci "npm install --no-audit && npm run dev"
 
 #list npm package - usage make npm-ls module=module
 npm-ls:
@@ -322,7 +327,7 @@ npm-ls:
 	-v $(currentDir)/src:/usr/src/app \
 	-w /usr/src/app \
 	$(user) \
-	node:20.8 /bin/bash -ci "npm ls $(module)"
+	node:22.9 /bin/bash -ci "npm ls $(module)"
 
 #update npm packages - usage make npm-update
 npm-update:
@@ -330,7 +335,7 @@ npm-update:
 	-v $(currentDir)/src:/usr/src/app \
 	-w /usr/src/app \
 	$(user) \
-	node:20.8 /bin/bash -ci "npm update"
+	node:22.9 /bin/bash -ci "npm update"
 
 #audit npm packages - usage make npm-audit
 npm-audit:
@@ -338,7 +343,7 @@ npm-audit:
 	-v $(currentDir)/src:/usr/src/app \
 	-w /usr/src/app \
 	$(user) \
-	node:20.8 /bin/bash -ci "npm audit"
+	node:22.9 /bin/bash -ci "npm audit"
 
 #audit fix npm packages - usage make npm-audit-fix
 npm-audit-fix:
@@ -346,7 +351,7 @@ npm-audit-fix:
 	-v $(currentDir)/src:/usr/src/app \
 	-w /usr/src/app \
 	$(user) \
-	node:20.8 /bin/bash -ci "npm audit fix"
+	node:22.9 /bin/bash -ci "npm audit fix"
 
 
 #list outdated npm packages
@@ -355,7 +360,7 @@ npm-outdated:
 	-v $(currentDir)/src:/usr/src/app \
 	-w /usr/src/app \
 	$(user) \
-	node:20.8 /bin/bash -ci "npm outdated"
+	node:22.9 /bin/bash -ci "npm outdated"
 
 #rebuild node
 npm-rebuild:
@@ -363,7 +368,7 @@ npm-rebuild:
 	-v $(currentDir)/src:/usr/src/app \
 	-w /usr/src/app \
 	$(user) \
-	node:20.8 /bin/bash -ci "npm rebuild"
+	node:22.9 /bin/bash -ci "npm rebuild"
 
 # npm mix Runner
 mix:
@@ -371,23 +376,32 @@ mix:
 	-v $(currentDir)/src:/usr/src/app \
 	-w /usr/src/app \
     --user 82:82 \
-	node:20.8 /bin/bash -ci "npm run production"
+	node:22.9 /bin/bash -ci "npm run production"
 
 mix-dev:
 	docker run --rm --name js-maintainence-dev --interactive \
 	-v $(currentDir)/src:/usr/src/app \
 	-w /usr/src/app \
 	$(user) \
-	node:20.8 /bin/bash -ci "npm run development"
+	node:22.9 /bin/bash -ci "npm run development"
 
 # Purge Containers
 purge-containers:
+ifeq ($(OS),Windows_NT)
+	$(DOCKER_COMPOSE) -f docker-compose-dev.yml stop ||: true
+	$(DOCKER_COMPOSE) -f docker-compose-dev.yml rm -vf ||: true
+	docker rm eventula_manager_app ||: true
+	docker rm eventula_manager_database ||: true
+	docker volume rm eventula_manager_database ||: true
+	docker volume rm eventula_manager_storage ||: true
+else
 	$(DOCKER_COMPOSE) -f docker-compose-dev.yml -p eventula_manager stop || true
 	$(DOCKER_COMPOSE) -f docker-compose-dev.yml -p eventula_manager rm -vf || true
 	docker rm eventula_manager_app || true
 	docker rm eventula_manager_database || true
 	docker volume rm eventula_manager_database || true
 	docker volume rm eventula_manager_storage || true
+endif
 
 # Purge Caches
 purge-cache:
@@ -414,6 +428,7 @@ purge-files:
 	touch /src/public/css/images/.gitkeep; \
 	rm -rf /src/storage/app/public/images/gallery ; \
 	rm -rf /src/storage/app/public/images/events ; \
+	rm -rf /src/storage/app/public/images/avatars ; \
 	rm -rf /src/storage/app/public/images/venues ; \
 	rm -rf /src/storage/app/public/images/main ; \
 	rm -rf /src/storage/user/scss/*.css ; \
@@ -428,7 +443,11 @@ database-upgrade:
 
 # execute mysql command usage make database-command command=sqlcommandhere
 database-command:
+ifeq ($(OS),Windows_NT)
+	powershell.exe -Command "echo \"use eventula_manager_database; $(command)\"| docker exec -i eventula_manager_database mysql -u eventula_manager -p'password'"
+else
 	echo "use eventula_manager_database; $(command)" | docker exec -i eventula_manager_database mysql -u eventula_manager -p'password'
+endif
 
 # import mysql database usage make database-command dbfile=dbfile.sql
 ifndef dbfile

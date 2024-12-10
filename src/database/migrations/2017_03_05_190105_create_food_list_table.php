@@ -16,7 +16,7 @@ class CreateFoodListTable extends Migration {
 		{
 			$table->increments('id');
 			$table->string('name');
-			$table->float('price', 10, 0);
+			$table->float('price', precision: 10);
 			$table->integer('size');
 			$table->timestamps();
 		});

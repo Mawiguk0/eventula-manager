@@ -21,4 +21,5 @@ return [
     'revoke_gift' => 'Tilbagekald gave',
     'staff_ticket' => 'Personalebillet',
     'free_ticket' => 'Gratis billet,',
+    'seat' => 'Sæde',
 ];

@@ -44,21 +44,7 @@ use Debugbar;
 	@endif
 
 	<!-- EVENT SPONSORS -->
-	@if (!$event->sponsors->isEmpty())
-		<div class="pb-2 mt-4 mb-4 border-bottom">
-			<a name="sponsors"></a>
-			<h3>@lang('events.eventsponsoredby', ['event' => $event->display_name])</h3>
-		</div>
-		@foreach ($event->sponsors as $sponsor)
-			<a href="{{$sponsor->website}}">
-				<picture>
-					<source srcset="{{ $sponsor->image_path }}.webp" type="image/webp">
-					<source srcset="{{ $sponsor->image_path }}" type="image/jpeg">
-					<img alt="{{ $sponsor->website}}" class="img-fluid rounded" src="{{ $sponsor->image_path }}"/>
-				</picture>
-			</a>
-		@endforeach
-	@endif
+	@include ('layouts._partials._sponsors.index')
 
 	<!-- ESSENTIAL INFORMATION -->
 	<div class="row">
@@ -81,7 +67,7 @@ use Debugbar;
     		<div class="alert alert-info" style="position: relative; padding-right: 150px;">
 	        	{{ $announcement->message }}
        			<span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%);">
-    	        	{{ $announcement->created_at->format('M d, h:s A') }}
+    	        	{{ $announcement->created_at->format('M d, h:i') }}
         		</span>
     		</div>
 			@endforeach
@@ -725,6 +711,7 @@ use Debugbar;
 	</table>
 
 		<!-- SEATING -->
+		<!-- partial Layout (layouts._partials._events.seating) needs changes from master -->
 		@if (!$event->online_event &&
 		!$event->seatingPlans->isEmpty() &&
 		(

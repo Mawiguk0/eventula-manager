@@ -17,7 +17,7 @@ class CreateFoodOrdersTable extends Migration {
 			$table->increments('id');
 			$table->integer('user_id');
 			$table->boolean('paid');
-			$table->float('debt', 10, 0);
+			$table->float('debt', precision: 10);
 			$table->integer('event_id');
 			$table->timestamps();
 		});

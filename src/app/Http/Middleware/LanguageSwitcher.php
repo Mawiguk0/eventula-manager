@@ -6,7 +6,9 @@ use Closure;
 use Session;
 use App;
 use Config;
-use App\Setting;
+use Illuminate\Support\Facades\Auth;
+use App\Libraries\Helpers;
+use App\Libraries\Settings;
 
 class LanguageSwitcher
 {
@@ -19,14 +21,24 @@ class LanguageSwitcher
      */
     public function handle($request, Closure $next)
     {
-        if ($locale = Setting::getSiteLocale())
-        {
-            $locale_dirs = array_filter(glob(app()->langPath().'/*'), 'is_dir');
-            if(in_array(app()->langPath().'/'.$locale, $locale_dirs))
-            {
-                App::setLocale($locale);
+        $setlocale = config('app.locale');
+        if ($locale = Settings::getSiteLocale()) {
+
+            if (!empty($locale) && Helpers::isValidLocale($locale)) {
+                $setlocale = $locale;
             }
         }
+
+        if (Auth::check() && Auth::user() && Settings::isUserLocaleEnabled()) {
+            if ($userLocale = Auth::user()->locale) {
+                if (!empty($userLocale) && Helpers::isValidLocale($userLocale)) {
+                    $setlocale = $userLocale;
+                }
+            }
+        }
+
+        app()->setLocale($setlocale);
+        app()->setFallbackLocale(config('app.fallback_locale'));
 
         return $next($request);
     }

@@ -103,7 +103,7 @@ class AuthController extends Controller
 
                 if (
                     is_null($user['steamid']) ||
-                    is_null($user['avatar']) ||
+                    is_null($user['steam_avatar']) ||
                     is_null($user['steamname'])
                 ) {
                     return redirect('/'); // redirect to site
@@ -152,7 +152,8 @@ class AuthController extends Controller
 
                 $this->validate($request, $validationRules);
 
-                $user->avatar               = $request->avatar;
+                $user->steam_avatar         = $request->avatar;
+                $user->selected_avatar      = 'steam';
                 $user->steamid              = $request->steamid;
                 $user->steamname            = $request->steamname;
 
@@ -197,6 +198,7 @@ class AuthController extends Controller
                 $this->validate($request, $rules, $messages);
                 $user->email          = $request->email;
                 $user->password       = Hash::make($request->password1);
+                $user->selected_avatar  = 'local';
                 break;
         }
 
@@ -204,6 +206,8 @@ class AuthController extends Controller
         $user->surname          = $request->surname;
         $user->username         = $request->username;
         $user->username_nice    = strtolower(str_replace(' ', '-', $request->username));
+        $user->locale           = Settings::getSiteLocale();
+
 
         if (!$user->save()) {
             Auth::logout();

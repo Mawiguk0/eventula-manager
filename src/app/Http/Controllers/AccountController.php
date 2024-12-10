@@ -7,8 +7,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
 use Session;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Settings;
 
+use App\Rules\ValidLocale;
 
 class AccountController extends Controller
 {
@@ -24,7 +27,9 @@ class AccountController extends Controller
             $creditLogs = $user->creditLogs()->paginate(5, ['*'], 'cl');
         }
         $purchases = $user->purchases()->paginate(5, ['*'], 'pu');
-        $tickets = $user->eventParticipants()->paginate(5, ['*'], 'ti');
+        $tickets = $user->eventParticipants()
+        ->orderBy('created_at', 'desc')
+        ->paginate(5, ['*'], 'ti');
         return view("accounts.index")
             ->withUser($user)
             ->withCreditLogs($creditLogs)
@@ -236,7 +241,13 @@ class AccountController extends Controller
                 case 'steam':
                     $user->steamname = "";
                     $user->steamid = "";
-                    $user->avatar = "";
+                    $user->steam_avatar = "";
+
+                    if ($user->selected_avatar == 'steam')
+                    {
+                        $user->selected_avatar = 'local';
+                    }
+
                     break;
                 default:
                     return Redirect::back()->withError('no valid sso method selected');
@@ -267,6 +278,7 @@ class AccountController extends Controller
             'surname'       => 'filled',
             'password1'     => 'same:password2',
             'password2'     => 'same:password1',
+            'locale'        => ['nullable', new ValidLocale]
         ];
         $messages = [
             'firstname.filled'  => 'Firstname Cannot be blank.',
@@ -295,6 +307,10 @@ class AccountController extends Controller
 
         $user->firstname = @$request->firstname;
         $user->surname = @$request->surname;
+        
+        if (isset($request->locale)) {
+            $user->locale = @$request->locale;
+        }
 
         if (!$user->save()) {
             return Redirect::back()->withFail("Oops, Something went Wrong.");
@@ -343,4 +359,47 @@ class AccountController extends Controller
         }
         return redirect('/');
     }
+
+    public function update_local_avatar(Request $request) {
+        $this->validate($request, [
+            'avatar' => 'required|image|mimes:jpg,png,jpeg,gif,svg|max:2048',
+        ]);
+        
+        if(!$path = Storage::putFile(
+            'public/images/avatars', $request->file('avatar')
+        ))
+        {
+            Session::flash('alert-danger', 'Oops,Something went wrong while uploading the File on the custom avatar upload.');
+            return Redirect::back();
+        }
+        $user = Auth::user();
+        $user->local_avatar = '/storage/images/avatars/' . basename($path);
+        $user->selected_avatar = 'local';
+        if (!$user->save()) {
+            Session::flash('alert-danger', 'Oops, Something went wrong while updating the user on the custom avatar upload.');
+            return Redirect::back();
+        }
+
+        Session::flash('alert-success', 'Custom avatar successfully updated!');
+        return Redirect::back();
+    }
+
+    public function update_selected_avatar(Request $request) {
+
+        $this->validate($request, [
+            'selected_avatar' => 'required|in:steam,local',
+        ]);
+
+        $user = Auth::user();
+        $user->selected_avatar = $request->selected_avatar;
+        if (!$user->save()) {
+            Session::flash('alert-danger', 'Oops, Something went wrong while updating the user on the selected avatar change.');
+            return Redirect::back();
+        }
+
+        Session::flash('alert-success', 'Selected avatar successfully updated!');
+        return Redirect::back();
+    }
+
+    
 }

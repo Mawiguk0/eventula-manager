@@ -31,34 +31,30 @@ class ParticipantsController extends Controller
         }
 
         if (!$event) {
-            abort(404);
+            abort(404, "Event not found.");
         }
 
-        if ($event->private_participants)
-        {
-            abort(403); 
-        }
+
 
         $return = array();
 
-        foreach ($event->eventParticipants as $participant) {
-            // $x["id"] = $participant->id;
-            // $x["user_id"] = $participant->user_id;
-            // $x["ticket_id"] = $participant->ticket_id;
-            // $x["gift"] = $participant->gift;
-            // $x["gift_sendee"] = $participant->gift_sendee;
-            $seat = "Not Seated";
-            if ($participant->seat) {
-                $seat = $participant->seat->seat;
-            }
-            $return[] = [
-                'username' => $participant->user->steamname ?? $participant->user->username,
-                'seat' => $seat,
-            ];
-            // $x['user']['steamname'] = $participant->user->steamname;
-            // $x['user']['username'] = $participant->user->username;
-        }
+        $return = [
+            'count' => $event->eventParticipants->count(),
+            'participants' => array(),
+        ];
 
+        if (!$event->private_participants) {
+            foreach ($event->eventParticipants as $participant) {
+                $seat = "Not Seated";
+                if ($participant->seat) {
+                    $seat = $participant->seat->seat;
+                }
+                $return["participants"][] = [
+                    'username' => $participant->user->steamname ?? $participant->user->username,
+                    'seat' => $seat,
+                ];
+            }
+        }
         return $return;
     }
 }

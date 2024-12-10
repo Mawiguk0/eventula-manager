@@ -53,8 +53,8 @@ class SteamController extends Controller
                     if ($info->personaname != $user->steamname) {
                         $user->steamname = $info->personaname;
                     }
-                    if ($info->avatarfull != $user->avatar) {
-                        $user->avatar = $info->avatarfull;
+                    if ($info->avatarfull != $user->steam_avatar) {
+                        $user->steam_avatar = $info->avatarfull;
                     }
                     $user->last_login = Carbon::now()->toDateTimeString();
                     $user->save();
@@ -78,7 +78,7 @@ class SteamController extends Controller
                     if (!Auth::user()) {
                         $user = [
                             'steamname'     => $info->personaname,
-                            'avatar'        => $info->avatarfull,
+                            'steam_avatar'        => $info->avatarfull,
                             'steamid'       => $info->steamID64,
                         ];
                         Session::put('user', $user);
@@ -121,7 +121,9 @@ class SteamController extends Controller
         }
 
         $user->steamname = $info->personaname;
-        $user->avatar = $info->avatarfull;
+        $user->steam_avatar = $info->avatarfull;
+        $user->selected_avatar = 'steam';
+        
         $user->steamid = $info->steamID64;
         if ($user->save()) {
             Session::flash('alert-success', "Successfully added steam account!");

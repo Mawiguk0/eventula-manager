@@ -34,12 +34,13 @@ class TicketsController extends Controller
             $event = Event::where('slug', $event)->first();
         }
         if (!$event) {
-            abort(404);
+            abort(404, "Event not found.");
         }
 
         $return = array();
         foreach ($event->tickets as $ticket) {
             $return[] = [
+                'id' => $ticket->id,
                 'name' => $ticket->name,
                 'type' => $ticket->type,
                 'price' => $ticket->price,
@@ -64,15 +65,14 @@ class TicketsController extends Controller
             $event = Event::where('slug', $event)->first();
         }
      	if (is_numeric($ticket)) {
-            $ticket = EventTicket::where('id', $ticket)->first();
-        } else {
-            $ticket = EventTicket::where('slug', $ticket)->first();
+            $ticket =  $event->tickets()->where('id', $ticket)->first();
         }
         if (!$event || !$ticket) {
-            abort(404);
+            abort(404, "Event not found.");
         }
 
         $return = [
+            'id' => $ticket->id,
             'name' => $ticket->name,
             'type' => $ticket->type,
             'price' => $ticket->price,

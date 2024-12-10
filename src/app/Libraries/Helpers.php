@@ -2,14 +2,19 @@
 
 namespace App\Libraries;
 
+use App\EventTicketGroup;
+use App\Event;
+use App\EventSeatingPlan;
 use Session;
 use Illuminate\Http\Request;
 use Exception;
 use DB;
 use App\GameServerCommandParameter;
 use App\EventTournament;
+use App\EventParticipant;
 use App\User;
 use App\GameServer;
+use App\EventTicket;
 use GuzzleHttp\Client;
 use \Carbon\Carbon as Carbon;
 use GrahamCampbell\ResultType\Result;
@@ -18,9 +23,33 @@ use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use HaydenPierce\ClassFinder\ClassFinder;
- 
+
 class Helpers
 {
+    
+    
+    /**
+     * Gets an array of all supported languages from the language directory.
+     *
+     * @return array
+     */
+    public static function getSupportedLocales()
+    {
+        return array_map('basename', array_filter(glob(app()->langPath().'/*'), 'is_dir'));
+    }
+
+
+    /**
+     * Validate if the given locale exists in the supported languages.
+     *
+     * @param  string  $locale
+     * @return bool
+     */
+    public static function isValidLocale($locale)
+    {
+        return in_array($locale, self::getSupportedLocales());
+    }
+
     // TODO - refactor - eg getGameSelectArray - specifially the selectArray part
     /**
      * Get Venues
@@ -144,90 +173,65 @@ class Helpers
         return Settings::getEventCountOffset() + $events;
     }
 
-    // TODO - move to model
     /**
-     * Get Next Event Name
-     * @return String
+     * Get Next Event Name.
+     *
+     * @return string
      */
     public static function getNextEventName()
     {
-        if ($event = \App\Event::where(
-            'end',
-            '>=',
-            Carbon::now()
-        )->orderBy(DB::raw('ABS(DATEDIFF(events.end, NOW()))'))->first()) {
-            if ($event->status == 'DRAFT' || $event->status == 'PREVIEW') {
-                return $event->display_name . ' - ' . $event->status;
-            }
-            return $event->display_name;
+        if ($event = Event::nextUpcoming()->first()) {
+            return ($event->status == 'DRAFT' || $event->status == 'PREVIEW')
+                ? $event->display_name . ' - ' . $event->status
+                : $event->display_name;
         }
         return 'Coming soon...';
     }
 
     /**
-     * Get Next Event Slug
-     * @return String
+     * Get Next Event Slug.
+     *
+     * @return string
      */
     public static function getNextEventSlug()
     {
-        if ($event = \App\Event::where(
-            'end',
-            '>=',
-            Carbon::now()
-        )->orderBy(DB::raw('ABS(DATEDIFF(events.end, NOW()))'))->first()) {
-            return $event->slug;
-        }
-        return '#';
+        return ($event = Event::nextUpcoming()->first()) ? $event->slug : '#';
     }
 
-
     /**
-     * Get Next Event Description
-     * @return String
+     * Get Next Event Description.
+     *
+     * @return string
      */
     public static function getNextEventDesc()
     {
-        if ($event = \App\Event::where(
-            'end',
-            '>=',
-            Carbon::now()
-        )->orderBy(DB::raw('ABS(DATEDIFF(events.end, NOW()))'))->first()) {
-            return $event->desc_long;
-        }
-        return 'Coming soon...';
+        return ($event = Event::nextUpcoming()->first()) ? $event->desc_long : 'Coming soon...';
     }
 
     /**
-     * Get Next Event Start Date
-     * @return String
+     * Get Next Event Start Date.
+     *
+     * @return string
      */
     public static function getNextEventStartDate()
     {
-        if ($event = \App\Event::where(
-            'end',
-            '>=',
-            Carbon::now()
-        )->orderBy(DB::raw('ABS(DATEDIFF(events.end, NOW()))'))->first()) {
-            return date("d-m-Y H:i", strtotime($event->start));
-        }
-        return 'Coming soon...';
+        return ($event = Event::nextUpcoming()->first())
+            ? date("d-m-Y H:i", strtotime($event->start))
+            : 'Coming soon...';
     }
 
     /**
-     * Get Next Event End Date
-     * @return String
+     * Get Next Event End Date.
+     *
+     * @return string
      */
     public static function getNextEventEndDate()
     {
-        if ($event = \App\Event::where(
-            'end',
-            '>=',
-            Carbon::now()
-        )->orderBy(DB::raw('ABS(DATEDIFF(events.end, NOW()))'))->first()) {
-            return date("d-m-Y H:i", strtotime($event->end));
-        }
-        return 'Coming soon...';
+        return ($event = Event::nextUpcoming()->first())
+            ? date("d-m-Y H:i", strtotime($event->end))
+            : 'Coming soon...';
     }
+
 
     /**
      * Get Total Event Participants Count
@@ -775,17 +779,29 @@ class Helpers
      * Get Ticket quatntity for Select
      * @return array
      */
-    public static function getTicketQuantitySelection($ticket, $remainingcapacity)
+    public static function getTicketQuantitySelection(EventTicket $ticket, $remainingcapacity, $defaultCapacity = 10)
     {
-        $ticketCount = min($remainingcapacity > 0 ? $remainingcapacity : 10, $ticket->quantity > 0 ? $ticket->quantity : 10);
-
-        if (is_numeric($ticket->no_tickets_per_user) && $ticket->no_tickets_per_user > 0) {
-            $ticketCount = min($ticket->no_tickets_per_user, $ticketCount);
-        }
+        $ticketCount = min(
+            $remainingcapacity > 0 ? $remainingcapacity : $defaultCapacity,
+            $ticket->quantity > 0 ? $ticket->quantity : $defaultCapacity,
+            ($ticket->no_tickets_per_user ?? 0) > 0 ? $ticket->no_tickets_per_user : $defaultCapacity,
+            ($ticket->ticketGroup?->tickets_per_user ?? 0) > 0 ? $ticket->ticketGroup->tickets_per_user : $defaultCapacity,
+            ($ticket->event->no_tickets_per_user ?? 0) > 0 ? $ticket->event->no_tickets_per_user : $defaultCapacity
+        );
 
         $result = array();
         for ($i = 1; $i <= $ticketCount; $i++) {
             $result[$i] = $i;
+        }
+
+        return $result;
+    }
+
+    public static function getTicketGroupSelection()
+    {
+        $result = ['' => '-- ungrouped --'];
+        foreach (EventTicketGroup::all(['id', 'name']) as $row) {
+            $result[$row['id']] = $row['name'];
         }
 
         return $result;
@@ -958,16 +974,59 @@ class Helpers
     }
     public static function getSeoKeywords()
     {
-        return explode(',',config('settings.seo_keywords'). ',Lan2Play Eventula Manager');
-    }    
-    
+        return explode(',', config('settings.seo_keywords') . ',Lan2Play Eventula Manager');
+    }
+
     public static function getSeoDescription()
     {
-        return config('settings.org_tagline'). Helpers::getPoweredByLine();
+        return config('settings.org_tagline') . Helpers::getPoweredByLine();
     }
 
     public static function getSeoCustomDescription($description)
     {
-        return $description. Helpers::getPoweredByLine();
+        return $description . Helpers::getPoweredByLine();
+    }
+
+    public static function getExistingSeatingPlansSelect()
+    {
+        $result = [];
+        foreach (EventSeatingPlan::all(['id', 'name', 'event_id']) as $plan) {
+            $event = Event::where('id', $plan->event_id)->first();
+            $result[$event->display_name] ??= [];
+            $result[$event->display_name][$plan->id] = $plan->name;
+        }
+        return $result;
+    }
+
+    /**
+     * Get top attendees by event count.
+     *
+     * @param  int  $count
+     * @return Collection
+     */
+    public static function getTopAttendees(int $count = 5): Collection
+    {
+        $users = User::where('admin', 0)->get();
+        return $users->filter(function ($user) {
+            return $user->unique_attended_event_count > 0;
+        })
+            ->sortByDesc('unique_attended_event_count')
+            ->take($count);
+    }
+
+    /**
+     * Get top winners by win count.
+     *
+     * @param int $count
+     * @return Collection
+     */
+    public static function getTopWinners(int $count = 5): Collection
+    {
+        $users = User::all();
+        return $users->filter(function ($user) {
+            return $user->win_count > 0;
+        })
+            ->sortByDesc('win_count')
+            ->take($count);
     }
 }

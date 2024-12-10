@@ -249,7 +249,7 @@
 						<div class="col-12 col-sm-9">
 							<p>
 								{{ $attendee->username }}<br>
-								<small> {{ $attendee->event_count }} @lang('home.eventsattended')</small>
+								<small> {{ $attendee->unique_attended_event_count }} @lang('home.eventsattended')</small>
 							</p>
 						</div>
 					</div>

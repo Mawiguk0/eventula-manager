@@ -1,7 +1,5 @@
 <?php
-
 return [
-
     /*
     |--------------------------------------------------------------------------
     | Default Text/Messages Lines
@@ -9,7 +7,6 @@ return [
     |
     |
     */
-
     'news' => 'Neuigkeiten',
     'comments' => 'Kommentare',
     'comment_reported' => 'Du hast diesen Kommentar gemeldet!',
@@ -31,6 +28,6 @@ return [
     'comment_edit_not_your' => 'Der Kommentar den du versuchst zu bearbeiten wurde nicht von dir gepostet!',
     'comment_cannot_edit' => 'Der Kommentar konnte nicht bearbeitet werden. Bitte versuche es erneut.',
     'comment_edited' => 'Der Kommentar wurde bearbeitet!',
-    'unknownuser'  => 'Unbekannter Benutzer',
-
+    'unknownuser' => 'Unbekannter Benutzer',
+    'please_login' => 'Bitte anmelden',
 ];

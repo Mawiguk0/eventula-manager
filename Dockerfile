@@ -1,16 +1,15 @@
-# FROM th0rn0/php-nginx-base:latest
 FROM lan2play/docker-php-nginx-base:latest
 LABEL org.opencontainers.image.authors="Thornton Phillis (Th0rn0@lanops.co.uk), Alexader Volz (Alexander@volzit.de)"
 
 # ENV - App Defaults
 
-ENV UUID 82
-ENV GUID 82
-ENV ENABLE_HTTPS false
-ENV LOG_FILES false
-ENV ANALYTICS_PROVIDER GoogleAnalytics
-ENV DB_MIGRATE false
-ENV TIMEZONE UTC
+ENV UUID=82
+ENV GUID=82
+ENV ENABLE_HTTPS=false
+ENV LOG_FILES=false
+ENV ANALYTICS_PROVIDER=GoogleAnalytics
+ENV DB_MIGRATE=false
+ENV TIMEZONE=UTC
 
 #versioning
 ARG BUILDNUMBER

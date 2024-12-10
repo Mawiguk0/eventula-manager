@@ -75,27 +75,9 @@
 		</div>
 
 	</div>
-
-	<div class="row">
-		<!-- EVENT INFORMATION -->
-		<div class="col-md-12">
-			<div class="pb-2 mt-4 mb-4 border-bottom">
-				<a name="event"></a>
-				<h3><i class="fas fa-info me-3"></i>@lang('events.eventinfo')</h3>
-			</div>
-			<div class="row">
-				<div class="col-12 col-sm-5">
-					<p class="bg-success-light text-success padding">@lang('events.start'): {{ date('H:i d-m-Y', strtotime($event->start)) }}</p>
-					<p class="bg-danger-light text-danger padding">@lang('events.end'): {{ date('H:i d-m-Y', strtotime($event->end)) }}</p>
-					<p class="bg-info-light text-info padding">@if ($event->getSeatingCapacity() == 0) @lang('events.capacity'): {{ $event->capacity }} @endif @if ($event->getSeatingCapacity() != 0) @lang('events.seatingcapacity'): {{ $event->getSeatingCapacity() }} @endif</p>
-				</div>
-				<div class="col-12 col-sm-7">
-					<p>{!! $event->desc_long !!}</p>
-				</div>
-			</div>
-		</div>
-
-		<!-- TICKETS -->
+	
+	@include ('layouts._partials._events.information')
+	<!-- TICKETS -->
 		<div class="col-md-12">
 			<!-- PURCHASE TICKETS -->
 			@if (!$event->tickets->isEmpty())
@@ -104,7 +86,7 @@
 				<h3><i class="fas fa-ticket-alt me-3"></i>@lang('events.purchasetickets')</h3>
 			</div>
 			<div class="row card-deck">
-				@foreach ($event->tickets as $ticket)
+				@foreach ($event->tickets()->orderBy('event_ticket_group_id')->get() as $ticket)
 				<div class="col-12 col-sm-4">
 					<div class="card mb-3" disabled>
 						<div class="card-body d-flex flex-column">
@@ -113,6 +95,9 @@
 							<small>
 								@lang('events.limitedavailability')
 							</small>
+							@endif
+							@if ($ticket->hasTicketGroup())
+								<small>@lang('events.ticketgroup', ['ticketgroup' => $ticket->ticketGroup->name])</small>
 							@endif
 							<div class="row mt-auto">
 								<div class="col-sm-12 col-12">
@@ -175,146 +160,9 @@
 			</div>
 			@endif
 		</div>
-	</div>
 
-	<!-- SEATING -->
-	@if (!$event->online_event &&
-	!$event->seatingPlans->isEmpty() &&
-	(
-	in_array('PUBLISHED', $event->seatingPlans->pluck('status')->toArray()) ||
-	in_array('PREVIEW', $event->seatingPlans->pluck('status')->toArray())
-	)
-	)
-	<div class="pb-2 mt-4 mb-4 border-bottom">
-		<a name="seating"></a>
-		<h3><i class="fas fa-chair me-3"></i>@lang('events.seatingplans') <small>- {{ $event->getSeatingCapacity() - $event->getSeatedCount() }} / {{ $event->getSeatingCapacity() }} @lang('events.seatsremaining')</small></h3>
-	</div>
-	<div class="card-group" id="accordion" role="tablist" aria-multiselectable="true">
-		@foreach ($event->seatingPlans as $seatingPlan)
-		@if ($seatingPlan->status != 'DRAFT')
-		<div class="card mb-3">
-			<a class="collapsed" role="button" data-bs-toggle="collapse" data-parent="#accordion" href="#collapse_{{ $seatingPlan->slug }}" aria-expanded="true" aria-controls="collapse_{{ $seatingPlan->slug }}">
-				<div class="card-header  bg-success-light" role="tab" id="headingOne">
-					<h4 class="card-title m-0">
-						{{ $seatingPlan->name }} <small>- {{ $seatingPlan->getSeatingCapacity() - $seatingPlan->getSeatedCount() }} / {{ $seatingPlan->getSeatingCapacity() }} @lang('events.available')</small>
-						@if ($seatingPlan->status != 'PUBLISHED')
-						<small> - {{ $seatingPlan->status }}</small>
-						@endif
-					</h4>
-				</div>
-			</a>
-			<div id="collapse_{{ $seatingPlan->slug }}" class="collapse @if ($loop->first) in @endif" role="tabpanel" aria-labelledby="collaspe_{{ $seatingPlan->slug }}">
-				<div class="card-body">
-					<div class="table-responsive text-center">
-						<table class="table">
-
-							<tbody>
-								@for ($row = 1; $row <= $seatingPlan->rows; $row++)
-									<tr>
-										<td>
-											<h4><strong>{{ Helpers::getLatinAlphabetUpperLetterByIndex($row) }}</strong></h4>
-										</td>
-										@for ($column = 1; $column <= $seatingPlan->columns; $column++)
-
-											<td style="padding-top:14px;">
-												@if ($event->getSeat($seatingPlan->id, $column, $row))
-												@if($event->getSeat($seatingPlan->id, $column, $row)->status == 'ACTIVE')
-												@if ($seatingPlan->locked)
-												<button class="btn btn-success btn-sm" disabled>
-													{{ Helpers::getLatinAlphabetUpperLetterByIndex($row) . $column }} - {{ $event->getSeat($seatingPlan->id, $column, $row)->eventParticipant->user->username }}
-												</button>
-												@else
-												<button class="btn btn-success btn-sm" disabled>
-													{{ Helpers::getLatinAlphabetUpperLetterByIndex($row) . $column }} - {{ $event->getSeat($seatingPlan->id, $column, $row)->eventParticipant->user->username }}
-												</button>
-												@endif
-												@endif
-												@else
-												@if ($seatingPlan->locked)
-												<button class="btn btn-primary btn-sm" disabled>
-													{{ Helpers::getLatinAlphabetUpperLetterByIndex($row) . $column }} - @lang('events.empty')
-												</button>
-												@else
-												@if (Auth::user() 
-														&& $event->getEventParticipant() 
-														&& ($event->getEventParticipant()->staff 
-															|| $event->getEventParticipant()->free 
-															|| $event->getEventParticipant()->ticket->seatable
-														)
-													)
-												<button class="btn btn-primary btn-sm" onclick="pickSeat(
-																				'{{ $seatingPlan->slug }}',
-																				'{{ $column }}',
-																				'{{ $row }}',
-																				'{{ Helpers::getLatinAlphabetUpperLetterByIndex($row) . $column }}'
-																			)" data-bs-toggle="modal" data-bs-target="#pickSeatModal">
-													{{ Helpers::getLatinAlphabetUpperLetterByIndex($row) . $column }} - @lang('events.empty')
-												</button>
-												@else
-												<button class="btn btn-primary btn-sm" disabled>
-													{{ Helpers::getLatinAlphabetUpperLetterByIndex($row) . $column }} - @lang('events.empty')
-												</button>
-												@endif
-												@endif
-												@endif
-											</td>
-											@endfor
-									</tr>
-									@endfor
-							</tbody>
-						</table>
-						@if ($seatingPlan->locked)
-						<p class="text-center"><strong> @lang('events.seatingplanlocked')</strong></p>
-						@endif
-					</div>
-				</div>
-				<div class="card-footer">
-					<div class="row" style="display: flex; align-items: center;">
-						<div class="col-12 col-md-8">
-							<img class="img-fluid" alt="{{ $seatingPlan->name }}" src="{{$seatingPlan->image_path}}" />
-						</div>
-						<div class="col-12 col-md-4">
-							@if ($user && !$user->getAllTickets($event->id)->isEmpty() && $user->hasSeatableTicket($event->id))
-							<h5>@lang('events.yourseats')</h5>
-							@foreach ($user->getAllTickets($event->id) as $participant)
-							@if ($participant->seat && $participant->seat->event_seating_plan_id == $seatingPlan->id)
-							{{ Form::open(array('url'=>'/events/' . $event->slug . '/seating/' . $seatingPlan->slug)) }}
-							{{ Form::hidden('_method', 'DELETE') }}
-							{{ Form::hidden('user_id', $user->id, array('id'=>'user_id','class'=>'form-control')) }}
-							{{ Form::hidden('participant_id', $participant->id, array('id'=>'participant_id','class'=>'form-control')) }}
-							{{ Form::hidden('seat_column_delete', $participant->seat->column, array('id'=>'seat_column_delete','class'=>'form-control')) }}
-							{{ Form::hidden('seat_row_delete', $participant->seat->row, array('id'=>'seat_row_delete','class'=>'form-control')) }}
-
-							<h5>
-								<button class="btn btn-success btn-block">
-									@lang('events.remove') - {{ $participant->seat->getName() }}
-								</button>
-							</h5>
-							{{ Form::close() }}
-							@endif
-							@endforeach
-							@elseif($user && !$user->hasSeatableTicket($event->id))
-							<div class="alert alert-info">
-								<h5>@lang('events.noseatableticket')</h5>
-							</div>
-							@elseif(Auth::user())
-							<div class="alert alert-info">
-								<h5>@lang('events.plspurchaseticket')</h5>
-							</div>
-							@else
-							<div class="alert alert-info">
-								<h5>@lang('events.plslogintopurchaseticket')</h5>
-							</div>
-							@endif
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-		@endif
-		@endforeach
-	</div>
-	@endif
+	@include ('layouts._partials._events.seating')
+	
 
 	<!-- VENUE INFORMATION -->
 	<div class="pb-2 mt-4 mb-4 border-bottom">
@@ -334,32 +182,23 @@
 			</address>
 		</div>
 		<div class="col-lg-5">
-			@foreach ($event->venue->images as $image)
-			<picture>
-				<source srcset="{{ $image->path }}.webp" type="image/webp">
-				<source srcset="{{ $image->path }}" type="image/jpeg">
-				<img class="img-fluid rounded" alt="{{ $event->venue->display_name }}" src="{{ $image->path }}" />
-			</picture>
-			@endforeach
+			<div class="center-align slider-for">
+				@include ('layouts._partials.slick_loader')
+	
+				@foreach ($event->venue->images as $image)
+						<picture>
+							<source srcset="{{ $image->path }}.webp" type="image/webp">
+							<source srcset="{{ $image->path }}" type="image/jpeg">
+							<img src="{{ $image->path }}" data-thumb="{{ $image->path }}"
+								alt="{{ $image->description ?? 'Image' }}" class="img-fluid">
+						</picture>
+				@endforeach
+			</div>
 		</div>
 	</div>
 
 	<!-- EVENT SPONSORS -->
-	@if (!$event->sponsors->isEmpty())
-		<div class="pb-2 mt-4 mb-4 border-bottom">
-			<a name="sponsors"></a>
-			<h3><i class="fas fa-running me-3"></i>@lang('events.eventsponsoredby', ['event' => $event->display_name])</h3>
-		</div>
-		@foreach ($event->sponsors as $sponsor)
-			<a href="{{ $sponsor->website }}">
-				<picture>
-					<source srcset="{{ $sponsor->image_path }}.webp" type="image/webp">
-					<source srcset="{{ $sponsor->image_path }}" type="image/jpeg">
-					<img class="img-fluid rounded" src="{{ $sponsor->image_path }}" alt="{{ $sponsor->website}}" />
-				</picture>
-			</a>
-		@endforeach
-	@endif
+	@include ('layouts._partials._sponsors.index')
 
 	<!-- EVENT INFORMATION SECTIONS -->
 	@if (!empty($event->information))
@@ -718,61 +557,5 @@
 			</tbody>
 		</table>
 	@endif
-
-
 </div>
-
-<!-- Seat Modal -->
-<div class="modal fade" id="pickSeatModal" tabindex="-1" role="dialog" aria-labelledby="editSeatingModalLabel" aria-hidden="true">
-	<div class="modal-dialog">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h4 class="modal-title" id="pickSeatModalLabel"></h4>
-				<button type="button" class="btn-close text-decoration-none" data-bs-dismiss="modal" aria-hidden="true"></button>
-			</div>
-			@if (Auth::user())
-			{{ Form::open(array('url'=>'/events/' . $event->slug . '/seating/', 'id'=>'pickSeatFormModal')) }}
-			<div class="modal-body">
-				<div class="mb-3">
-					<h4>@lang('events.wichtickettoseat')</h4>
-					{{
-								Form::select(
-									'participant_id',
-									$user->getTickets($event->id),
-									null,
-									array(
-										'id'    => 'format',
-										'class' => 'form-control'
-									)
-								)
-							}}
-					<p class="pt-2">@lang('events.wantthisseat')</p>
-					<p>@lang('events.removeitanytime')</p>
-				</div>
-			</div>
-			{{ Form::hidden('user_id', $user->id, array('id'=>'user_id','class'=>'form-control')) }}
-			{{ Form::hidden('seat_column', null, array('id'=>'seat_column','class'=>'form-control')) }}
-			{{ Form::hidden('seat_row', null, array('id'=>'seat_row','class'=>'form-control')) }}
-			<div class="modal-footer">
-				<button type="submit" class="btn btn-success">@lang('events.yes')</button>
-				<button type="button" class="btn btn-danger" data-bs-dismiss="modal">@lang('events.no')</button>
-			</div>
-			{{ Form::close() }}
-			@endif
-		</div>
-	</div>
-</div>
-
-<script>
-	function pickSeat(seating_plan_slug, seatColumn, seatRow, seatDisplay) {
-		jQuery("#seat_column").val(seatColumn);
-		jQuery("#seat_row").val(seatRow);
-		jQuery("#seat_column_delete").val(seatColumn);
-		jQuery("#seat_row_delete").val(seatRow);
-		jQuery("#seat_number_modal").val(seatDisplay);
-		jQuery("#pickSeatModalLabel").html('Do you what to choose seat ' + seatDisplay);
-		jQuery("#pickSeatFormModal").prop('action', '/events/{{ $event->slug }}/seating/' + seating_plan_slug);
-	}
-</script>
-
 @endsection

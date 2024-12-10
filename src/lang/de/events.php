@@ -43,7 +43,7 @@ return [
     /* Index */
     'start' => 'Start',
     'end' => 'Ende',
-    'seatingcapacity' => 'Sitzplatz Kapazitäten',
+    'seatingcapacity' => 'Sitzplatz Kapazität',
     /* Show */
     'eventinfo' => 'Event Informationen',
     'tickets' => 'Tickets',
@@ -75,7 +75,7 @@ return [
     'yes' => 'Ja',
     'no' => 'Nein',
     'buy' => 'Kaufen',
-    'noseatableticket' => 'Kein Ticket mit Sitzplatz in Besitz',
+    'noseatableticket' => 'Kein Ticket mit Sitzplatz in Besitz.',
     'noseatableticketlist' => 'Kein Ticket mit Sitzplatz in Besitz.',
     'timetable-primary-pill' => 'Hauptzeitplan',
     'timetable-created-at' => 'Erstellt:',
@@ -121,4 +121,9 @@ return [
     'tournament_freebie_not_permitted' => 'Die Teilnahme an Turnieren von Freebies ist auf diesem Event nicht erlaubt',
     /* Ticket Partial*/
     'remove_seating' => 'Sitzplatz entfernen',
+
+    /* General */
+    'time_delimiter' => 'um',
+    'time_suffix' => 'Uhr',
+    'savetocalendar' => 'In Kalender speichern'
 ];

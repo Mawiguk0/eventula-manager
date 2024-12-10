@@ -7,6 +7,7 @@ use Auth;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Carbon\Carbon;
 
 use Cviebrock\EloquentSluggable\Sluggable;
 
@@ -56,6 +57,8 @@ class Event extends Model
 
     protected static function boot()
     {
+        // Remember There are is also an ApiGlobalScopesMiddleware used here
+
         parent::boot();
 
         $admin = false;
@@ -89,16 +92,53 @@ class Event extends Model
         }
     }
 
+
+    /**
+     * Scope a query to get the next upcoming event(s).
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param int $limit
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeNextUpcoming(Builder $query, int $limit = 1): Builder
+    {
+        return $query->where('end', '>=', Carbon::now())
+            ->orderByRaw('ABS(DATEDIFF(events.end, NOW()))')
+            ->limit($limit);
+    }
+
+    /**
+     * Scope a query to get the current active event(s).
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param \Carbon\Carbon|null $now
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeCurrent(Builder $query, Carbon $now = null): Builder
+    {
+        $now = $now ?? Carbon::now();
+        return $query->where('start', '<', $now)
+            ->where('end', '>', $now)
+            ->orderBy('id', 'desc');
+    }
+
     /*
      * Relationships
      */
     public function eventParticipants()
+    {
+        return $this->hasMany('App\EventParticipant')->where('revoked', '=', 0);
+    }
+    public function allEventParticipants()
     {
         return $this->hasMany('App\EventParticipant');
     }
     public function timetables()
     {
         return $this->hasMany('App\EventTimetable');
+    }
+    public function ticketGroups() {
+        return $this->hasMany('App\EventTicketGroup');
     }
     public function tickets()
     {
@@ -328,4 +368,41 @@ class Event extends Model
         }
         return true;
     }
+
+    /**
+     * Get ungrouped tickets of Eventvent
+     * @return \Illuminate\Database\Eloquent\Collection|\App\EventTicket[]
+     */
+    public function getUngroupedTickets() {
+        return $this->tickets()->ungrouped()->get();;
+    }
+
+    /**
+     * Get if Event is currently running
+     * @return Boolean
+     */
+    public function isRunningCurrently()
+    {
+        return $this->isRunningOn(Carbon::now());
+    }
+
+    /**
+     * Get if Event is running on a specific date
+     * @param  Carbon $date
+     * @return Boolean
+     */
+    public function isRunningOn(Carbon $date)
+    {
+        return $date->between(Carbon::create($this->start),Carbon::create($this->end));
+    }
+
+    /**
+     * Get if Event has already ended
+     * @return Boolean
+     */
+    public function hasEnded()
+    {
+        return Carbon::create($this->end)->greaterThan(Carbon::now());
+    }
+
 }

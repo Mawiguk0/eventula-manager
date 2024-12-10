@@ -42,7 +42,7 @@
 							</div>
 							<div class="mb-3">
 								{{ Form::label('org_logo','Logo',array('id'=>'','class'=>'')) }}
-								{{ Form::file('org_logo',array('id'=>'org_logo','class'=>'form-control')) }}
+								{{ Form::file('org_logo',array('id'=>'org_logo','class'=>'form-control', 'accept'=>'image/*')) }}
 							</div>
 							 <div class="mb-3">
 								{{ Form::label('org_favicon','Favicon',array('id'=>'','class'=>'')) }}

@@ -21,7 +21,7 @@ class MeController extends Controller
         $user = auth('sanctum')->user();
 
         if (!isset($user)) {
-            abort(404);
+            abort(404, "User not found.");
         }
 
 

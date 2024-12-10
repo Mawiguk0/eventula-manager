@@ -164,7 +164,7 @@ class GalleryController extends Controller
         ]);
 
         $files = $request->file('images');
-        
+
         //Keep a count of uploaded files
         $fileCount = count($files);
 
@@ -186,7 +186,7 @@ class GalleryController extends Controller
 
             if ($ext == "jpg" || $ext == "JPG" || $ext == "jpeg" || $ext == "JPEG" || $ext == "png" || $ext == "PNG" || $ext == "bmp" || $ext == "BMP") {
                 $image->filetype            = 0;
-                Image::make($file)
+                Image::read($file)
                 ->resize(null, 1080, function ($constraint) {
                     $constraint->aspectRatio();
                     $constraint->upsize();
@@ -203,9 +203,9 @@ class GalleryController extends Controller
                     $imageName
                     );
             }
-            
+
             $image->path = $destinationPath . $imageName;
-            
+
             if ($image->save()){
                 $uploadcount++;
             }

@@ -24,6 +24,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Validator;
+
+use App\Rules\ValidLocale;
 
 use function PHPUnit\Framework\isEmpty;
 
@@ -301,12 +304,14 @@ class SettingsController extends Controller
             'legal_notice'              => 'filled',
             'privacy_policy'            => 'filled',
             'seo_keywords'              => 'filled',
-            'currency'                  => 'in:GBP,USD,EUR,DKK',
+            'currency'                  => 'in:GBP,USD,EUR,SEK,DKK',
             'participant_count_offset'  => 'numeric',
             'event_count_offset'        => 'numeric',
             'org_logo'                  => 'image',
             'org_favicon'               => 'image',
+            'site_locale'               => ['nullable', new ValidLocale]
         ];
+
         $messages = [
             'terms_and_conditions.filled'       => 'Terms And Conditions cannot be empty',
             'org_name.filled'                   => 'Org Name cannot be empty',
@@ -318,11 +323,11 @@ class SettingsController extends Controller
             'legal_notice.filled'               => 'LegalNotice is required in Germany',
             'privacy_policy.filled'             => 'PrivacyPolicy is required in Germany',
             'seo_keywords.filled'               => 'SEO Keywords cannot be empty',
-            'currency.in'                       => 'Currency must be GBP, USD, DKK or EUR',
+            'currency.in'                       => 'Currency must be GBP, USD, SEK, DKK or EUR',
             'participant_count_offset.numeric'  => 'Participant Count Offset must be a number',
             'event_count_offset.numeric'        => 'Lan Count Offset must be a number',
             'org_logo.image'                    => 'Org Logo must be a Image',
-            'org_favicon'                       => 'Org Favicon must be a Image'
+            'org_favicon'                       => 'Org Favicon must be a Image',
         ];
         $this->validate($request, $rules, $messages);
 
@@ -706,6 +711,51 @@ class SettingsController extends Controller
             return Redirect::back();
         }
         Session::flash('alert-success', "Successfully Disabled the MatchMaking System!");
+        return Redirect::back();
+    }
+
+    /**
+     * Enable UserLocale
+     * @return Redirect
+     */
+    public function enableUserLocale()
+    {
+        if (!Settings::enableUserLocale()) {
+            Session::flash('alert-danger', "Could not Enable UserLocale!");
+            return Redirect::back();
+        }
+        Session::flash('alert-success', "Successfully Enabled UserLocale!");
+        return Redirect::back();
+    }
+
+    /**
+     * Disable UserLocale
+     * @return Redirect
+     */
+    public function disableUserLocale()
+    {
+        if (!Settings::disableUserLocale()) {
+            Session::flash('alert-danger', "Could not Disable UserLocale!");
+            return Redirect::back();
+        }
+        Session::flash('alert-success', "Successfully Disabled UserLocale!");
+        return Redirect::back();
+    }
+
+
+    /**
+     * Resets UserLocale of all users to current Site Locale
+     * @return Redirect
+     */
+    public function resetUserLocales()
+    {
+        $count = 0;
+        foreach (User::all() as $user) {
+            $user->locale = Settings::getSiteLocale();
+            $user->save();
+            $count++;
+        }
+        Session::flash('alert-success', 'Successfully resetted userlocale to ' . Settings::getSiteLocale() . ' on ' . $count . ' Users!');
         return Redirect::back();
     }
 

@@ -1,5 +1,11 @@
 <div class="card mb-3">
-	<div class="card-header  bg-success-light text-success">
+	<div @class([
+			"card-header",
+			"bg-success-light" => !$participant->revoked,
+			"text-success" => !$participant->revoked,
+			"bg-danger-light" => $participant->revoked,
+			"text-danger" => $participant->revoked
+        ])>
 		<strong>
 		{{ $participant->event->display_name }}
 		</strong>
@@ -41,6 +47,9 @@
 		@endif
 		@if ($participant->ticket && !$participant->ticket->seatable)
 			<span class="badge text-bg-info float-end" style="margin-top:2px;">@lang('tickets.not_eligable_for_seat')</span>
+		@endif
+		@if ($participant->revoked)
+			<span class="badge text-bg-danger float-end" style="margin-top: 2px;">@lang('tickets.has_been_revoked')</span>
 		@endif
 	</div>
 	<div class="card-body">

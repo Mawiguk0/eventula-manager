@@ -1,0 +1,11 @@
+/**
+ * Participants
+ */
+
+.participants-table {
+  tr {
+    &.revoked {
+      text-decoration: line-through;
+    }
+  }
+}

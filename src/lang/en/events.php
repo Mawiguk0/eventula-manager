@@ -58,6 +58,7 @@ return [
     'purchasetickets' => 'Purchase tickets',
     'soldout' => 'Sold out!',
     'limitedavailability' => 'Limited availablity',
+    'ticketgroup' => 'Ticket group: :ticketgroup',
     'availablefrom' => 'This ticket will be available for purchase at :time on :date',
     'ticketnolongavailable' => 'This ticket is no longer available for purchase',
     'seatsremaining' => 'Seats remaining',
@@ -121,4 +122,9 @@ return [
     'tournament_freebie_not_permitted' => 'Tournament participation of freebies is not allowed at this event.',
     /* Ticket Partial*/
     'remove_seating' => 'Remove Seating',
+
+    /* General */
+    'time_delimiter' => 'at',
+    'time_suffix' => '',
+    'savetocalendar' => 'Save to Calendar'
 ];

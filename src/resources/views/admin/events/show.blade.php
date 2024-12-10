@@ -75,6 +75,25 @@
 									</div>
 								</div>
 							</div>
+							<div class="row">
+								<div class="col-12">
+									<div class="mb-3">
+										{{ Form::label('no_tickets_per_user','No. tickets per user',array('id'=>'','class'=>'')) }}
+										{{ Form::number(
+												'no_tickets_per_user',
+												$event->no_tickets_per_user,
+												array(
+													'id'=>'no_tickets_per_user',
+													'class'=>'form-control',
+													'min' => 0
+												)
+										) }}
+										<div class="form-text">Limit total amount of tickets a user can buy for the event. 0 or leave empty for
+											unlimited.
+										</div>
+									</div>
+								</div>
+							</div>
 						</div>
 						<div class="col-md-6 col-sm-12">
 							<div class="row">
@@ -102,17 +121,10 @@
 						</div>
 					</div>
 					<div class="row">
-						<div class="col-md-8 col-sm-12">
-							<strong>Venue</strong>
-							<address>
-								@if ($event->venue->display_name) {{ $event->venue->display_name }}<br> @endif
-								@if ($event->venue->address_1) {{ $event->venue->address_1 }}<br> @endif
-								@if ($event->venue->address_2) {{ $event->venue->address_2 }}<br> @endif
-								@if ($event->venue->address_street) {{ $event->venue->address_street }}<br> @endif
-								@if ($event->venue->address_city) {{ $event->venue->address_city }}<br> @endif
-								@if ($event->venue->address_postcode) {{ $event->venue->address_postcode }}<br> @endif
-								@if ($event->venue->address_country) {{ $event->venue->address_country }}<br> @endif
-							</address>
+						<div class="col-md-8 col-sm-12 mb-4">
+							{{-- Venue selection --}}
+							{{ Form::label('venue','Venue',array('id'=>'','class'=>'')) }}
+							{{ Form::select('venue', Helpers::getVenues(), $event->venue->id, array('id'=>'venue','class'=>'form-control')) }}
 						</div>
 						<div class="col-md-4 col-sm-12">
 
@@ -139,14 +151,14 @@
 								</label>
 						</div>
 					</div>
-					<div class="form-group">
+					<div class="mb-3">
 						<div class="form-check">
 								<label class="form-check-label">
 									{{ Form::checkbox('tournaments_staff', null, $event->tournaments_staff, array('id'=>'tournaments_staff')) }} Allow Tournaments for Staff
 								</label>
 						</div>
 					</div>
-					<div class="form-group">
+					<div class="mb-3">
 						<div class="form-check">
 								<label class="form-check-label">
 									{{ Form::checkbox('tournaments_freebies', null, $event->tournaments_freebies, array('id'=>'tournaments_freebies')) }} Allow Tournaments for Freebies
